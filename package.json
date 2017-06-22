@@ -1,0 +1,22 @@
+{
+  "name": "WebScript",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.js",
+    "test": "node_modules/.bin/mocha"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "htmlparser2": "^3.9.2",
+    "snabbdom": "^0.6.9"
+  },
+  "devDependencies": {
+    "browserify": "^14.4.0",
+    "mocha": "^3.4.2",
+    "uglify-js": "^3.0.18"
+  }
+}
