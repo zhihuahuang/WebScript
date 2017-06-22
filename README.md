@@ -45,7 +45,7 @@ WebScript 是一个语义化的前端框架。
 
 ```html
 < while (i++ < 100) { >
-	<p>${i}</p>
+    <p>${i}</p>
 < } >
 ```
 
@@ -54,12 +54,14 @@ WebScript 是一个语义化的前端框架。
 ```html
 <ul>
     < for (var i=0; i<10; i++) { >
-	<li>${i}</li>
-	< } >
+    <li>${i}</li>
+    < } >
 </ul>
 ```
 
 ## 变量绑定
+
+变量绑定以 `:` 开头，后面接需要绑定的变量名，只支持表单元素的绑定。
 
 ```html
 <input type="text" value=":name">
@@ -67,6 +69,10 @@ WebScript 是一个语义化的前端框架。
 
 ## 事件
 
-## 草案
+```javascript
+<button on-click="show">Button</button>
+```
+
+## 其他
 
 ## 废弃
