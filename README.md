@@ -11,7 +11,7 @@ WebScript 是一个语义化的前端框架。
 样例
 
 ```html
-< var text = 'Hello World'; >
+<% var text = 'Hello World'; %>
 <p>${text}</p>
 ```
 
@@ -26,11 +26,11 @@ WebScript 是一个语义化的前端框架。
 #### if...else
 
 ```html
-< if (Date.now() % 2 === 0) { >
+<% if (Date.now() % 2 === 0) { %>
 <p>Odd</p>
-< else { >
+<% else { %>
 <p>Even</p>
-< } >
+<% } %>
 ```
 
 #### 三元表达式
@@ -44,18 +44,18 @@ WebScript 是一个语义化的前端框架。
 #### while
 
 ```html
-< while (i++ < 100) { >
+<% while (i++ < 100) { %>
     <p>${i}</p>
-< } >
+<% } %>
 ```
 
 #### for
 
 ```html
 <ul>
-    < for (var i=0; i<10; i++) { >
+    <% for (var i=0; i<10; i++) { %>
     <li>${i}</li>
-    < } >
+    <% } %>
 </ul>
 ```
 
