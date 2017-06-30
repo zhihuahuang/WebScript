@@ -1,107 +1,234 @@
-var STATE_TEXT = 0,
-    STATE_OPEN_TAG_START = 1, // <
-    STATE_TAG_NAME = 2,
-    STATE_TAG_BLANK = 3;
+const LT = "<";
+const GT = ">";
+const SINGLE_QUTO = "'";
+const DOUBLE_QUTO = '"';
+const TPL_QUTO = "`";
+const ESCAPE_CHAR = "\\";
 
-STATE_CODE_SINGLE_QUTO;
-STATE_CODE_SINGLE_QUTO_ESCAPE;
-STATE_CODE_SINGLE_QUTO
+var STATE_HTML = 0;
 
-var state = STATE_TEXT;
-var code = "var html='";
-var buffer = '';
+var STATE_CODE = 1;
+var STATE_CODE_SINGLE_QUTO = 2;
+var STATE_CODE_DOUBLE_QUTO = 3;
+
+var STATE_OUTPUT = 4;
+var STATE_OUTPUT_SINGLE_QUTO = 5;
+var STATE_OUTPUT_DOUBLE_QUTO = 6;
+
+var STATE_SCRIPT_TAG = 7;
+var STATE_SCRIPT_SINGLE_QUTO = 8;
+var STATE_SCRIPT_DOUBLE_QUTO = 9;
+var STATE_SCRIPT_TPL_QUTO = 10;
+var STATE_SCRIPT_CODE = 11;
+
+var text = '';
+var state = STATE_HTML;
+var code;
 var index = 0;
 
 function transfer () {
-    const char = text.charAt(index++);
+    const char = text.charAt(index);
 
     switch (state) {
-        case STATE_TEXT:
-            if (char == '<') {
-                state = STATE_OPEN_TAG_START;
-                buffer += char;
-            }
-            else {
-                buffer += char;
-            }
-            break;
-
-        case STATE_OPEN_TAG_START:
-            if (char == %) {
+        case STATE_HTML:
+            if ('<' == char && '%' == text.charAt(index+1)) {
                 state = STATE_CODE;
-                code += "';" + char;
+                code += "';";
+                index++;
+            }
+            else if ('<' == char &&
+                     's' == text.charAt(index+1) &&
+                     'c' == text.charAt(index+2) &&
+                     'r' == text.charAt(index+3) &&
+                     'i' == text.charAt(index+4) &&
+                     'p' == text.charAt(index+5) &&
+                     't' == text.charAt(index+6) &&
+                     /[\s>]/.test(text.charAt(index+7))) {
+                state = STATE_SCRIPT_TAG;
+                code += "<script";
+                index += 6;
+            }
+            else if ('$' == char && '{' == text.charAt(index+1)) {
+                state = STATE_OUTPUT;
+                code += "'+(";
+                index++;
             }
             else {
-                state = STATE_TEXT;
-                code += '<' + char;
-            }
-            break;
-
-        case STATE_TAG_NAME:
-            if (/\s/.test(char)) {
-                state = STATE_TAG_BLANK;
-                code += char;
-            }
-            else {
                 code += char;
             }
             break;
-
-        case STATE_TAG_BLANK:
-            if (/[a-z]/i.test(char)) {
-
-            }
 
         case STATE_CODE:
-            if ("'" == char) {
+            if (SINGLE_QUTO == char) {
                 state = STATE_CODE_SINGLE_QUTO;
                 code += char;
             }
-            else if ('"' == char) {
+            else if (DOUBLE_QUTO == char) {
                 state = STATE_CODE_DOUBLE_QUTO;
                 code += char;
             }
             else if ('%' == char && '>' == text.charAt(index+1)) {
-                state = STATE_TEXT;
-                index += 2;
+                state = STATE_HTML;
+                code += ";html+='";
+                index++;
             }
+            else {
+                code += char;
+            }
+            break;
 
         // 代码中的单引号
         case STATE_CODE_SINGLE_QUTO:
-            if ("\\" == char) {
-                code += "\\" + text.charAt(index++);
+            if (ESCAPE_CHAR == char) {
+                code += char + text.charAt(++index);
             }
-            else if ("'" == char) {
+            else if (SINGLE_QUTO == char) {
                 state = STATE_CODE;
                 code += char;
             }
             else {
                 code += char;
             }
+            break;
 
-         //
+         // 代码中的双引号
         case STATE_CODE_DOUBLE_QUTO:
-            if ("\\" == char) {
-                code += "\\" + text.charAt(index++);
+            if (ESCAPE_CHAR == char) {
+                code += char + text.charAt(++index);
             }
-            else if ('"' == char) {
+            else if (DOUBLE_QUTO == char) {
                 state = STATE_CODE;
                 code += char;
             }
             else {
                 code += char;
             }
+            break;
 
-        default:
-            code += char;
+        case STATE_OUTPUT:
+            if (SINGLE_QUTO == char) {
+                state = STATE_OUTPUT_SINGLE_QUTO;
+                code += char;
+            }
+            else if (DOUBLE_QUTO == char) {
+                state = STATE_OUTPUT_DOUBLE_QUTO;
+                code += char;
+            }
+            else if ('}' == char) {
+                state = STATE_HTML;
+                code += ")+'";
+            }
+            else {
+                code += char;
+            }
+            break;
+
+        // 代码中的单引号
+        case STATE_OUTPUT_SINGLE_QUTO:
+        case STATE_SCRIPT_SINGLE_QUTO:
+            if (ESCAPE_CHAR == char) {
+                code += char + text.charAt(++index);
+            }
+            else if (SINGLE_QUTO == char) {
+                state = STATE_OUTPUT;
+                code += char;
+            }
+            else {
+                code += char;
+            }
+            break;
+
+        // 代码中的双引号
+        case STATE_OUTPUT_DOUBLE_QUTO:
+            if (ESCAPE_CHAR == char) {
+                code += char + text.charAt(++index);
+            }
+            else if (DOUBLE_QUTO == char) {
+                state = STATE_OUTPUT;
+                code += char;
+            }
+            else {
+                code += char;
+            }
+            break;
+
+        // Script 代码
+        case STATE_SCRIPT_TAG:
+            if (SINGLE_QUTO == char) {
+                state = STATE_SCRIPT_SINGLE_QUTO;
+                code += char;
+            }
+            else if (DOUBLE_QUTO == char) {
+                state = STATE_SCRIPT_DOUBLE_QUTO;
+                code += char;
+            }
+            else if ('>' == char) {
+                state = STATE_SCRIPT_CODE;
+                code += char;
+            }
+            else {
+                code += char;
+            }
+            break;
+
+        case STATE_SCRIPT_CODE:
+            if ('<' == char &&
+                '/' == text.charAt(index+1) &&
+                's' == text.charAt(index+2) &&
+                'c' == text.charAt(index+3) &&
+                'r' == text.charAt(index+4) &&
+                'i' == text.charAt(index+5) &&
+                'p' == text.charAt(index+6) &&
+                't' == text.charAt(index+7) &&
+                '>' == text.charAt(index+8)) {
+                state = STATE_HTML;
+                code += '</script>';
+                index += 8;
+            }
+            else {
+                code += char;
+            }
+            break;
+
+        case STATE_SCRIPT_SINGLE_QUTO:
+            if (ESCAPE_CHAR == char) {
+                code += char + text.charAt(++index);
+            }
+            else if (SINGLE_QUTO == char) {
+                state = STATE_SCRIPT_CODE;
+                code += char;
+            }
+            else {
+                code += char;
+            }
+            break;
+
+        case STATE_SCRIPT_DOUBLE_QUTO:
+            if (ESCAPE_CHAR == char) {
+                code += char + text.charAt(++index);
+            }
+            else if (DOUBLE_QUTO == char) {
+                state = STATE_SCRIPT_CODE;
+                code += char;
+            }
+            else {
+                code += char;
+            }
+            break;
     }
+
+    index++;
 }
 
-function parse (text) {
+function parse (txt) {
+    code = "var html='";
+    text = txt.replace(/\r?\n/g, "\\n");
     const length = text.length;
     while (index < length) {
         transfer();
     }
+    code += "';return html;";
+    return code;
 }
 
 module.exports = parse;

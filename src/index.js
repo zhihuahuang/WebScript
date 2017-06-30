@@ -7,7 +7,7 @@ var patch = snabbdom.init([ // Init patch function with chosen modules
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 
-var compiler = require('./compiler');
+var tokenizer = require('./tokenizer');
 var render = require('./render');
 var observer = require('./observer');
 
@@ -26,7 +26,7 @@ function WebScript(data, options) {
 
     this.data = observer(data);
 
-    this.code = compiler(element.outerHTML);
+    this.code = tokenizer(element.outerHTML);
 
     var html = render(this.code, data);
 
