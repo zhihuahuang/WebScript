@@ -3,8 +3,6 @@ var isObject = require('./lib/isObject');
 
 module.exports = function Observer(obj) {
     var subscribes = [];
-    var propStack = [];
-
     var observe = function fn(object, path) {
         for (var prop in object) {
             (function () {

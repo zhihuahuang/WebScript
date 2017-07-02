@@ -8,7 +8,18 @@
     <title>Document</title>
 </head>
 <body>
-    <p>${time}</p>
+    <div>
+        <p>TimeStamp: ${time}</p>
+        <%
+            var random = parseInt(100 * Math.random());
+        %>
+        <p>Random: ${random}</p>
+        <% if (random % 2 == 0) { %>
+        <p>Random is Odd</p>
+        <% } else {%>
+        <p>Random is Event</p>
+        <% } %>
+    </div>
     <script src="../dist/webscript.js"></script>
     <script>
         (function () {
@@ -20,7 +31,7 @@
                 data.time = Date.now();
             }, 1000);
 
-            var webscript = WebScript(data);
+            var webscript = new WebScript(data);
         }());
     </script>
 </body>

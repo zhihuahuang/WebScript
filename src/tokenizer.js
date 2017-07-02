@@ -1,9 +1,9 @@
-const LT = "<";
-const GT = ">";
-const SINGLE_QUTO = "'";
-const DOUBLE_QUTO = '"';
-const TPL_QUTO = "`";
-const ESCAPE_CHAR = "\\";
+var LT = "<";
+var GT = ">";
+var SINGLE_QUTO = "'";
+var DOUBLE_QUTO = '"';
+var TPL_QUTO = "`";
+var ESCAPE_CHAR = "\\";
 
 var STATE_HTML = 0;
 
@@ -27,7 +27,7 @@ var code;
 var index = 0;
 
 function transfer () {
-    const char = text.charAt(index);
+     var char = text.charAt(index);
 
     switch (state) {
         case STATE_HTML:
@@ -43,7 +43,7 @@ function transfer () {
                      'i' == text.charAt(index+4) &&
                      'p' == text.charAt(index+5) &&
                      't' == text.charAt(index+6) &&
-                     /[\s>]/.test(text.charAt(index+7))) {
+                     /[>\s]/.test(text.charAt(index+7))) {
                 state = STATE_SCRIPT_TAG;
                 code += "<script";
                 index += 6;
@@ -52,6 +52,12 @@ function transfer () {
                 state = STATE_OUTPUT;
                 code += "'+(";
                 index++;
+            }
+            else if ("\r" == char) {
+                code += "\\r";
+            }
+            else if ("\n" == char) {
+                code += "\\n";
             }
             else {
                 code += char;
@@ -71,6 +77,9 @@ function transfer () {
                 state = STATE_HTML;
                 code += ";html+='";
                 index++;
+            }
+            else if ('\r' == char || '\n' == char) {
+                // Do Nothing
             }
             else {
                 code += char;
@@ -222,8 +231,8 @@ function transfer () {
 
 function parse (txt) {
     code = "var html='";
-    text = txt.replace(/\r?\n/g, "\\n");
-    const length = text.length;
+    text = txt;
+     var length = text.length;
     while (index < length) {
         transfer();
     }

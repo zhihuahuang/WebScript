@@ -11,6 +11,8 @@ var tokenizer = require('./tokenizer');
 var render = require('./render');
 var Observer = require('./observer');
 
+var dom2script = require('dom2hscript');
+
 /**
  * From Babel
  *
@@ -35,20 +37,33 @@ window.WebScript = function (data, options) {
         element = options.root;
     }
     else {
-        element = document.body;
+        element = document.body.children[0];
     }
 
-    var code = tokenizer(element.outerHTML);
+    var html = element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>');
+
+    console.log(html);
+
+    var code = tokenizer(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
+
+    console.log(code);
 
     var observer = new Observer(data);
+    var vnode;
 
-    observer.attach(function () {
+    observer.attach(repatch);
+
+    repatch();
+    
+    function repatch() {
         var html = render(code, data);
 
-        var hscript = html2hscript(html);
+        var hyerscript = dom2script.parseHTML(html);
 
-        var vnode = eval(hscript);
+        var _vnode = eval(hyerscript);
 
-        patch(element, vnode);
-    });
+        patch(vnode || element, _vnode);
+
+        vnode = _vnode;
+    }
 };
