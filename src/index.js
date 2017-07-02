@@ -9,33 +9,7 @@ var h = require('snabbdom/h').default; // helper function for creating vnodes
 
 var tokenizer = require('./tokenizer');
 var render = require('./render');
-var observer = require('./observer');
-
-function WebScript(data, options) {
-    __classCallCheck(this, WebScript);
-
-    var element;
-
-    options = options || {};
-    if ('root' in options) {
-        element = options.root;
-    }
-    else {
-        element = document.body;
-    }
-
-    this.data = observer(data);
-
-    this.code = tokenizer(element.outerHTML);
-
-    var html = render(this.code, data);
-
-    var hscript = html2hscript(html);
-
-    var vnode = eval(hscript);
-
-    patch(element, vnode);
-}
+var Observer = require('./observer');
 
 /**
  * From Babel
@@ -51,4 +25,30 @@ function __classCallCheck(instance, Constructor) {
     }
 }
 
-window.WebScript = WebScript;
+window.WebScript = function (data, options) {
+    __classCallCheck(this, WebScript);
+
+    var element;
+
+    options = options || {};
+    if ('root' in options) {
+        element = options.root;
+    }
+    else {
+        element = document.body;
+    }
+
+    var code = tokenizer(element.outerHTML);
+
+    var observer = new Observer(data);
+
+    observer.attach(function () {
+        var html = render(code, data);
+
+        var hscript = html2hscript(html);
+
+        var vnode = eval(hscript);
+
+        patch(element, vnode);
+    });
+};

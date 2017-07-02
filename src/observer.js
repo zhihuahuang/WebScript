@@ -1,21 +1,28 @@
-var propStack = array();
-var observers = [];
+var isFunction = require('./lib/isFunction');
+var isObject = require('./lib/isObject');
 
-var observeObject = function fn(object) {
-    for (var prop in object) {
-        propStack.push(key);
-        if (isObject(object)) {
-            fn(object)
-        }
-        else {
+module.exports = function Observer(obj) {
+    var subscribes = [];
+    var propStack = [];
+
+    var observe = function fn(object, path) {
+        for (var prop in object) {
             (function () {
-                var target = propStack.join('.');
+                var target = (path || '') + '["' + prop + '"]';
                 var value = object[prop];
+
+                if (isObject(value)) {
+                    fn(value, target);
+                }
+
                 Object.defineProperty(object, prop, {
                     get: function () {
                         return value;
                     },
                     set: function (val) {
+                        if (isObject(val)) {
+                            fn(val, target);
+                        }
                         value = val;
                         notify({
                             target: target
@@ -24,22 +31,28 @@ var observeObject = function fn(object) {
                 });
             }());
         }
-        propStack.pop();
+    };
+
+    function attach (fn) {
+        if (isFunction(fn)) {
+            subscribes.push(fn);
+        }
     }
+
+    function detach (fn) {
+        // TODO
+    }
+
+    function notify (event) {
+        for (var i=0, length = subscribes.length; i < length; i++) {
+            subscribes[i](event);
+        }
+    }
+
+    observe(obj);
+
+    return {
+        attach: attach,
+        detach: detach
+    };
 };
-
-function attach (fn) {
-    if (isFunction(fn)) {
-        observers.push(fn);
-    }
-}
-
-function detach (fn) {
-    // TODO
-}
-
-function notify (event) {
-    for (var i=0, length = observers.length; i < length; i++) {
-        observers[i](event);
-    }
-}
