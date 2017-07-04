@@ -226,7 +226,7 @@ function transfer () {
     index++;
 }
 
-function parse (txt) {
+function compiler (txt) {
     code = "var html='";
     text = txt;
      var length = text.length;
@@ -237,4 +237,4 @@ function parse (txt) {
     return code;
 }
 
-module.exports = parse;
+module.exports = compiler;

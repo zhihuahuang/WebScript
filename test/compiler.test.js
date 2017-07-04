@@ -1,10 +1,10 @@
-const assert = require('assert');
+var assert = require('assert');
 
-const tokenizer = require('../src/tokenizer');
+var compiler = require('../src/compiler');
 
 describe('Template', function () {
     describe('HTML', function () {
-        let testCases = [{
+        var testCases = [{
             text: '<button>Click Me</button>',
             code: "var html='<button>Click Me</button>';"
         }];
@@ -16,7 +16,7 @@ describe('Template', function () {
         });
     });
     describe('Var Output', function () {
-        let testCases = [{
+        var testCases = [{
             text: '<p>I am ${ name }</p>',
             code: "var html='<p>I am '+(name)+'</p>';"
         },{
@@ -31,7 +31,7 @@ describe('Template', function () {
         });
     });
     describe('Condition Control', function () {
-        let testCases = [{
+        var testCases = [{
             text: '< if (isTrue) { ><p>true</p>< } else { ><p>false</p>< } >',
             code: "var html='';if (isTrue) {html+='<p>true</p>';} else {html+='<p>false</p>';}html+='';"
         }];
