@@ -1,19 +1,19 @@
 var fs = require('fs');
 
 function requireModule(src, dist, cb) {
-    var browserify = require('browserify');
-    var b = browserify();
-    b.add(src);
-    b.bundle()
-        .on('end', cb)
+    let browserify = require('browserify')();
+
+    browserify.add(src);
+    browserify.bundle()
         .on('error', function (err) {
             console.error(err);
         })
-        .pipe(fs.createWriteStream(dist));
+        .pipe(fs.createWriteStream(dist).on('close', cb));
 }
 
 function minifyJS(src, dist, cb) {
     var UglifyJS = require("uglify-js");
+
     fs.readFile(src, 'utf8', function (err, data) {
         var result = UglifyJS.minify(data);
         if (result.error) {
