@@ -7,9 +7,10 @@ var patch = snabbdom.init([ // Init patch function with chosen modules
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 
-var tokenizer = require('./tokenizer');
+var compiler = require('./compiler');
 var render = require('./render');
 var Observer = require('./observer');
+var parser = require('./parser');
 
 var dom2script = require('dom2hscript');
 
@@ -40,7 +41,7 @@ window.WebScript = function (data, options) {
         element = document.body.children[0];
     }
 
-    var code = tokenizer(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
+    var code = compiler(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
 
     var observer = new Observer(data);
     var vnode;
@@ -52,7 +53,9 @@ window.WebScript = function (data, options) {
     function repatch() {
         var html = render(code, data);
 
-        var hyerscript = dom2script.parseHTML(html);
+        //var hyerscript = dom2script.parseHTML(html);
+        hyerscript = parser(html);
+        // console.log(parser(html));
 
         var _vnode = eval(hyerscript);
 

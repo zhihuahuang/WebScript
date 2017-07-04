@@ -859,179 +859,6 @@ exports.vnode = vnode;
 exports.default = vnode;
 
 },{}],13:[function(require,module,exports){
-var snabbdom = require('snabbdom');
-var patch = snabbdom.init([ // Init patch function with chosen modules
-  require('snabbdom/modules/class').default, // makes it easy to toggle classes
-  require('snabbdom/modules/props').default, // for setting properties on DOM elements
-  require('snabbdom/modules/style').default, // handles styling on elements with support for animations
-  require('snabbdom/modules/eventlisteners').default // attaches event listeners
-]);
-var h = require('snabbdom/h').default; // helper function for creating vnodes
-
-var tokenizer = require('./tokenizer');
-var render = require('./render');
-var Observer = require('./observer');
-
-var dom2script = require('dom2hscript');
-
-/**
- * From Babel
- *
- * @param instance
- * @param Constructor
- * @private
- */
-function __classCallCheck(instance, Constructor) {
-    // check if we create a new Object
-    if (!(instance instanceof Constructor)) {
-        throw new TypeError("Cannot call a class as a function");
-    }
-}
-
-window.WebScript = function (data, options) {
-    __classCallCheck(this, WebScript);
-
-    var element;
-
-    options = options || {};
-    if ('root' in options) {
-        element = options.root;
-    }
-    else {
-        element = document.body.children[0];
-    }
-
-    var code = tokenizer(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
-
-    var observer = new Observer(data);
-    var vnode;
-
-    observer.attach(repatch);
-
-    repatch();
-    
-    function repatch() {
-        var html = render(code, data);
-
-        var hyerscript = dom2script.parseHTML(html);
-
-        var _vnode = eval(hyerscript);
-
-        patch(vnode || element, _vnode);
-
-        vnode = _vnode;
-    }
-};
-},{"./observer":17,"./render":18,"./tokenizer":19,"dom2hscript":1,"snabbdom":10,"snabbdom/h":3,"snabbdom/modules/class":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8,"snabbdom/modules/style":9}],14:[function(require,module,exports){
-module.exports = function (array) {
-    return toString.call(array) === '[object Array]';
-};
-
-},{}],15:[function(require,module,exports){
-module.exports = function (fn) {
-    return toString.call(fn) === '[object Function]';
-};
-
-},{}],16:[function(require,module,exports){
-module.exports = function (obj) {
-    return toString.call(obj) === '[object Object]';
-};
-
-},{}],17:[function(require,module,exports){
-var isFunction = require('./lib/isFunction');
-var isObject = require('./lib/isObject');
-var isArray = require('./lib/isArray');
-
-module.exports = function Observer(obj) {
-    var subscribes = [];
-    var observe = function fn(object, path) {
-        for (var prop in object) {
-            (function () {
-                var target = (path || '') + '["' + prop + '"]';
-                var value = object[prop];
-
-                if (isObject(value)) {
-                    fn(value, target);
-                }
-
-                if (isArray(value)) {
-                    var names = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
-                    for (var i = 0, length = names.length; i < length; i++) {
-                        (function (array, name) {
-                            var fn = array[name];
-                            Object.defineProperty(array, name, {
-                                value: function () {
-                                    var returnValue = fn.apply(this, arguments);
-                                    notify({
-                                        target: target
-                                    });
-                                    return returnValue;
-                                }
-                            });
-                        }(value, names[i]));
-                    }
-                }
-
-                Object.defineProperty(object, prop, {
-                    get: function () {
-                        return value;
-                    },
-                    set: function (val) {
-                        if (isObject(val)) {
-                            fn(val, target);
-                        }
-                        value = val;
-                        notify({
-                            target: target
-                        });
-                    }
-                });
-            }());
-        }
-    };
-
-    function attach (fn) {
-        if (isFunction(fn)) {
-            subscribes.push(fn);
-        }
-    }
-
-    function detach (fn) {
-        // TODO
-    }
-
-    function notify (event) {
-        for (var i=0, length = subscribes.length; i < length; i++) {
-            (function(fn) {
-                setTimeout(function() {
-                    fn(event);
-                }, 0);
-            }(subscribes[i]));
-        }
-    }
-
-    observe(obj);
-
-    return {
-        attach: attach,
-        detach: detach
-    };
-};
-},{"./lib/isArray":14,"./lib/isFunction":15,"./lib/isObject":16}],18:[function(require,module,exports){
-/**
- * Render Function
- *
- * @param code
- * @param data
- * @returns {*}
- */
-module.exports = function (code, data) {
-    var code = 'function(' + Object.keys(data).join(',') + '){' + code + '}';
-    var fn;
-    eval('fn=' + code);
-    return fn.apply(this, Object.values(data));
-};
-},{}],19:[function(require,module,exports){
 var LT = "<";
 var GT = ">";
 var SINGLE_QUTO = "'";
@@ -1112,9 +939,6 @@ function transfer () {
                 code += ";html+='";
                 index++;
             }
-            //else if ('\r' == char || '\n' == char) {
-            //    // Do Nothing
-            //}
             else {
                 code += char;
             }
@@ -1263,7 +1087,7 @@ function transfer () {
     index++;
 }
 
-function parse (txt) {
+function compiler (txt) {
     code = "var html='";
     text = txt;
      var length = text.length;
@@ -1274,6 +1098,247 @@ function parse (txt) {
     return code;
 }
 
-module.exports = parse;
+module.exports = compiler;
 
-},{}]},{},[13]);
+},{}],14:[function(require,module,exports){
+var snabbdom = require('snabbdom');
+var patch = snabbdom.init([ // Init patch function with chosen modules
+  require('snabbdom/modules/class').default, // makes it easy to toggle classes
+  require('snabbdom/modules/props').default, // for setting properties on DOM elements
+  require('snabbdom/modules/style').default, // handles styling on elements with support for animations
+  require('snabbdom/modules/eventlisteners').default // attaches event listeners
+]);
+var h = require('snabbdom/h').default; // helper function for creating vnodes
+
+var compiler = require('./compiler');
+var render = require('./render');
+var Observer = require('./observer');
+var parser = require('./parser');
+
+var dom2script = require('dom2hscript');
+
+/**
+ * From Babel
+ *
+ * @param instance
+ * @param Constructor
+ * @private
+ */
+function __classCallCheck(instance, Constructor) {
+    // check if we create a new Object
+    if (!(instance instanceof Constructor)) {
+        throw new TypeError("Cannot call a class as a function");
+    }
+}
+
+window.WebScript = function (data, options) {
+    __classCallCheck(this, WebScript);
+
+    var element;
+
+    options = options || {};
+    if ('root' in options) {
+        element = options.root;
+    }
+    else {
+        element = document.body.children[0];
+    }
+
+    var code = compiler(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
+
+    var observer = new Observer(data);
+    var vnode;
+
+    observer.attach(repatch);
+
+    repatch();
+    
+    function repatch() {
+        var html = render(code, data);
+
+        //var hyerscript = dom2script.parseHTML(html);
+        hyerscript = parser(html);
+        // console.log(parser(html));
+
+        var _vnode = eval(hyerscript);
+
+        patch(vnode || element, _vnode);
+
+        vnode = _vnode;
+    }
+};
+},{"./compiler":13,"./observer":18,"./parser":19,"./render":20,"dom2hscript":1,"snabbdom":10,"snabbdom/h":3,"snabbdom/modules/class":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8,"snabbdom/modules/style":9}],15:[function(require,module,exports){
+module.exports = function (array) {
+    return toString.call(array) === '[object Array]';
+};
+
+},{}],16:[function(require,module,exports){
+module.exports = function (fn) {
+    return toString.call(fn) === '[object Function]';
+};
+
+},{}],17:[function(require,module,exports){
+module.exports = function (obj) {
+    return toString.call(obj) === '[object Object]';
+};
+
+},{}],18:[function(require,module,exports){
+var isFunction = require('./lib/isFunction');
+var isObject = require('./lib/isObject');
+var isArray = require('./lib/isArray');
+
+module.exports = function Observer(obj) {
+    var subscribes = [];
+    var observe = function fn(object, path) {
+        for (var prop in object) {
+            (function () {
+                var target = (path || '') + '["' + prop + '"]';
+                var value = object[prop];
+
+                if (isObject(value)) {
+                    fn(value, target);
+                }
+
+                if (isArray(value)) {
+                    var names = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
+                    for (var i = 0, length = names.length; i < length; i++) {
+                        (function (array, name) {
+                            var fn = array[name];
+                            Object.defineProperty(array, name, {
+                                value: function () {
+                                    var returnValue = fn.apply(this, arguments);
+                                    notify({
+                                        target: target
+                                    });
+                                    return returnValue;
+                                }
+                            });
+                        }(value, names[i]));
+                    }
+                }
+
+                Object.defineProperty(object, prop, {
+                    get: function () {
+                        return value;
+                    },
+                    set: function (val) {
+                        if (isObject(val)) {
+                            fn(val, target);
+                        }
+                        value = val;
+                        notify({
+                            target: target
+                        });
+                    }
+                });
+            }());
+        }
+    };
+
+    function attach (fn) {
+        if (isFunction(fn)) {
+            subscribes.push(fn);
+        }
+    }
+
+    function detach (fn) {
+        // TODO
+    }
+
+    function notify (event) {
+        for (var i=0, length = subscribes.length; i < length; i++) {
+            (function(fn) {
+                setTimeout(function() {
+                    fn(event);
+                }, 0);
+            }(subscribes[i]));
+        }
+    }
+
+    observe(obj);
+
+    return {
+        attach: attach,
+        detach: detach
+    };
+};
+},{"./lib/isArray":15,"./lib/isFunction":16,"./lib/isObject":17}],19:[function(require,module,exports){
+var domParser = new DOMParser();
+
+function parseFromString(string) {
+    var doc = domParser.parseFromString(string, 'text/html');
+    return doc.body.firstChild;
+}
+
+function parseDOM(element) {
+    var tagName = element.tagName;
+
+    var output = "h('" + tagName;
+
+    if (element.id) {
+        output += '#' + element.id;
+    }
+    if (element.className) {
+        output += '.' + element.className.trim().replace(/\s+/, '.');
+    }
+
+    // 解析属性
+    var attributes = element.attributes;
+    var attributeList = [];
+    for(var i = 0, length = attributes.length; i < length; i++) {
+        var name = attributes[i].name;
+        var value = attributes[i].value;
+        // 如果是 <input>，并且 value 属性的值是 : 开头的合法变量名，则绑定函数
+        if (name == 'value' && /^:[$[a-z]/i.test(value.trim()) && tagName == 'INPUT') {
+            var match = /^:([^\s]+)/.exec(value.trim());
+            var bindName = "data" + (/^\[/.test(match[1]) ?  "" : ".") + match[1];
+            attributeList.push("on:{input:function(event){" +
+                                    "var self = this;" +
+                                    bindName + "=event.target.value;" +
+                                    "observer.attach(function(){" +
+                                        "event.target.value=" + bindName +
+                                    "})" +
+                                "}}");
+        }
+        else if (name != 'id' && name != 'class') {
+            attributeList.push('"' + name + '":' + JSON.stringify(value));
+        }
+    }
+
+    output += "',{" + attributeList.join(",") + "}";
+
+    // 解析子元素
+    output += ',[';
+    for(var i = 0, length = element.childNodes.length; i < length; i++){
+        var child = element.childNodes[i];
+        if (child.nodeType == Node.TEXT_NODE) {
+            output += JSON.stringify(child.textContent) + ",";
+        }
+        else {
+            output += parseDOM(child) + ",";
+        }
+    }
+    output += "])";
+
+    return output;
+}
+
+module.exports = function (html) {
+    return parseDOM(parseFromString(html));
+};
+
+},{}],20:[function(require,module,exports){
+/**
+ * Render Function
+ *
+ * @param code
+ * @param data
+ * @returns {*}
+ */
+module.exports = function (code, data) {
+    var code = 'function(' + Object.keys(data).join(',') + '){' + code + '}';
+    var fn;
+    eval('fn=' + code);
+    return fn.apply(this, Object.values(data));
+};
+},{}]},{},[14]);

@@ -19,12 +19,15 @@
         <% } else {%>
         <p>Random is Event</p>
         <% } %>
+        <input type="text" value=":number">
+        Number: ${number}
     </div>
     <script src="../dist/webscript.js"></script>
     <script>
-        (function () {
+//        (function () {
             var data = {
-                time: Date.now()
+                time: Date.now(),
+                number: 1
             };
 
             setInterval(function () {
@@ -32,7 +35,7 @@
             }, 1000);
 
             var webscript = new WebScript(data);
-        }());
+//        }());
     </script>
 </body>
 </html>
