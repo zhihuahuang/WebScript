@@ -40,13 +40,7 @@ window.WebScript = function (data, options) {
         element = document.body.children[0];
     }
 
-    var html = element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>');
-
-    console.log(html);
-
     var code = tokenizer(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
-
-    console.log(code);
 
     var observer = new Observer(data);
     var vnode;

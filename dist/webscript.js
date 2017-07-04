@@ -901,13 +901,7 @@ window.WebScript = function (data, options) {
         element = document.body.children[0];
     }
 
-    var html = element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>');
-
-    console.log(html);
-
     var code = tokenizer(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
-
-    console.log(code);
 
     var observer = new Observer(data);
     var vnode;
@@ -928,19 +922,25 @@ window.WebScript = function (data, options) {
         vnode = _vnode;
     }
 };
-},{"./observer":16,"./render":17,"./tokenizer":18,"dom2hscript":1,"snabbdom":10,"snabbdom/h":3,"snabbdom/modules/class":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8,"snabbdom/modules/style":9}],14:[function(require,module,exports){
+},{"./observer":17,"./render":18,"./tokenizer":19,"dom2hscript":1,"snabbdom":10,"snabbdom/h":3,"snabbdom/modules/class":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8,"snabbdom/modules/style":9}],14:[function(require,module,exports){
+module.exports = function (array) {
+    return toString.call(array) === '[object Array]';
+};
+
+},{}],15:[function(require,module,exports){
 module.exports = function (fn) {
     return toString.call(fn) === '[object Function]';
 };
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 module.exports = function (obj) {
     return toString.call(obj) === '[object Object]';
 };
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var isFunction = require('./lib/isFunction');
 var isObject = require('./lib/isObject');
+var isArray = require('./lib/isArray');
 
 module.exports = function Observer(obj) {
     var subscribes = [];
@@ -952,6 +952,24 @@ module.exports = function Observer(obj) {
 
                 if (isObject(value)) {
                     fn(value, target);
+                }
+
+                if (isArray(value)) {
+                    var names = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
+                    for (var i = 0, length = names.length; i < length; i++) {
+                        (function (array, name) {
+                            var fn = array[name];
+                            Object.defineProperty(array, name, {
+                                value: function () {
+                                    var returnValue = fn.apply(this, arguments);
+                                    notify({
+                                        target: target
+                                    });
+                                    return returnValue;
+                                }
+                            });
+                        }(value, names[i]));
+                    }
                 }
 
                 Object.defineProperty(object, prop, {
@@ -984,7 +1002,11 @@ module.exports = function Observer(obj) {
 
     function notify (event) {
         for (var i=0, length = subscribes.length; i < length; i++) {
-            subscribes[i](event);
+            (function(fn) {
+                setTimeout(function() {
+                    fn(event);
+                }, 0);
+            }(subscribes[i]));
         }
     }
 
@@ -995,7 +1017,7 @@ module.exports = function Observer(obj) {
         detach: detach
     };
 };
-},{"./lib/isFunction":14,"./lib/isObject":15}],17:[function(require,module,exports){
+},{"./lib/isArray":14,"./lib/isFunction":15,"./lib/isObject":16}],18:[function(require,module,exports){
 /**
  * Render Function
  *
@@ -1009,7 +1031,7 @@ module.exports = function (code, data) {
     eval('fn=' + code);
     return fn.apply(this, Object.values(data));
 };
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var LT = "<";
 var GT = ">";
 var SINGLE_QUTO = "'";
@@ -1043,7 +1065,7 @@ function transfer () {
 
     switch (state) {
         case STATE_HTML:
-            if ('<' == char && '%' == text.charAt(index+1)) {
+            if (LT == char && '%' == text.charAt(index+1)) {
                 state = STATE_CODE;
                 code += "';";
                 index++;
@@ -1090,9 +1112,9 @@ function transfer () {
                 code += ";html+='";
                 index++;
             }
-            else if ('\r' == char || '\n' == char) {
-                // Do Nothing
-            }
+            //else if ('\r' == char || '\n' == char) {
+            //    // Do Nothing
+            //}
             else {
                 code += char;
             }

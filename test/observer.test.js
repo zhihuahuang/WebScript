@@ -1,21 +1,96 @@
-var Observer = require('../src/observer');
+const assert = require('assert');
 
-var data = {
-    name: 'Jack',
-    extra: {
-        height: 180,
-        weight: 75
-    }
-};
+const Observer = require('../src/observer');
 
-var observer = new Observer(data);
-observer.attach(function (event) {
-    console.log(event.target + ': ' + JSON.stringify(data)); // Tom
+describe('Observer', function () {
+
+    this.timeout(1);
+
+    it('object', function (done) {
+        let data = {
+            object: {
+                prop1: 1
+            }
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        data.object = {
+            prop2: 2
+        };
+    });
+
+    it('object-set-property', function (done) {
+        let data = {
+            object: {
+                prop1: 1
+            }
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        data.object.prop1 = 2;
+    });
+
+    it('object-add-property', function (done) {
+        let data = {
+            object: {
+                prop1: 1
+            }
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        data.object.prop2 = 2;
+    });
+
+    it('object-delete-property', function (done) {
+        let data = {
+            object: {
+                prop1: 1
+            }
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        delete data.object.prop1;
+    });
+
+    it('array', function (done) {
+        let data = {
+            array: [1]
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        data.array = [2];
+    });
+
+    it('array-push', function (done) {
+        let data = {
+            array: [1]
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        data.array.push(2);
+    });
 });
-
-data.name = 'Tom';
-data.extra = {
-    height: 175,
-    weight: 65
-};
-data.extra.height = 178;

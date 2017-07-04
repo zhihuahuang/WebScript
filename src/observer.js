@@ -1,5 +1,6 @@
 var isFunction = require('./lib/isFunction');
 var isObject = require('./lib/isObject');
+var isArray = require('./lib/isArray');
 
 module.exports = function Observer(obj) {
     var subscribes = [];
@@ -11,6 +12,24 @@ module.exports = function Observer(obj) {
 
                 if (isObject(value)) {
                     fn(value, target);
+                }
+
+                if (isArray(value)) {
+                    var names = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
+                    for (var i = 0, length = names.length; i < length; i++) {
+                        (function (array, name) {
+                            var fn = array[name];
+                            Object.defineProperty(array, name, {
+                                value: function () {
+                                    var returnValue = fn.apply(this, arguments);
+                                    notify({
+                                        target: target
+                                    });
+                                    return returnValue;
+                                }
+                            });
+                        }(value, names[i]));
+                    }
                 }
 
                 Object.defineProperty(object, prop, {
@@ -43,7 +62,11 @@ module.exports = function Observer(obj) {
 
     function notify (event) {
         for (var i=0, length = subscribes.length; i < length; i++) {
-            subscribes[i](event);
+            (function(fn) {
+                setTimeout(function() {
+                    fn(event);
+                }, 0);
+            }(subscribes[i]));
         }
     }
 

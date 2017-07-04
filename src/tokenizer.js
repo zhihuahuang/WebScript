@@ -31,7 +31,7 @@ function transfer () {
 
     switch (state) {
         case STATE_HTML:
-            if ('<' == char && '%' == text.charAt(index+1)) {
+            if (LT == char && '%' == text.charAt(index+1)) {
                 state = STATE_CODE;
                 code += "';";
                 index++;
@@ -77,9 +77,6 @@ function transfer () {
                 state = STATE_HTML;
                 code += ";html+='";
                 index++;
-            }
-            else if ('\r' == char || '\n' == char) {
-                // Do Nothing
             }
             else {
                 code += char;
