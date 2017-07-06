@@ -1,6 +1,6 @@
 # WebScript
 
-![version](https://img.shields.io/badge/version-0.2.0-green.svg)
+![version](https://img.shields.io/badge/version-0.3.0-green.svg)
 
 WebScript 是一个灵活、语义化的轻量级前端框架。
 
