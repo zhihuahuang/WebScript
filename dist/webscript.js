@@ -1,125 +1,4 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var parser = require('./parser');
-var parseStyle = function(el){
-  var style = el.style;
-  var output = {};
-  for (var i = 0; i < style.length; ++i) {
-    var item = style.item(i);
-    output[item] = style[item];
-  }
-  return output;
-};
-
-var parseDOM = function(el){
-    if(!el.tagName && el.nodeType === Node.TEXT_NODE){
-        return JSON.stringify(el.textContent);
-    }
-    if(!el.attributes){
-      return;
-    }
-    var attributes = {};
-    for(var i = 0; i < el.attributes.length; i++){
-      var attr = el.attributes[i];
-      if(attr.name && attr.value){
-        if(attr.name == "style"){
-          attributes.style = parseStyle(el);
-        }
-        else{
-          attributes[attr.name] = attr.value;
-        }
-      }
-    }
-    var output = "h('" + el.tagName;
-    if(attributes.id){
-      output = output +'#'+ attributes.id;
-      delete attributes.id;
-    }
-    if(attributes.class){
-      output = output +'.'+ attributes.class.replace(/ /g,".");
-      delete attributes.class;
-    }
-    output += "',";
-    output += JSON.stringify(attributes);
-    var children = [];
-    output += ',[';
-    for(var i = 0; i < el.childNodes.length; i++){
-      output += parseDOM(el.childNodes[i]) + ",";
-    }
-    output += "])";
-    return output;
-};
-var parseHTML = function(html){
-  return parseDOM(parser(html));
-};
-exports.parseDOM = parseDOM;
-exports.parseHTML = parseHTML;
-module.exports = exports;
-
-},{"./parser":2}],2:[function(require,module,exports){
-var parser;
-if(!window.DOMParser){
-  throw new Error("DOMParser required");
-}
-/* inspired by https://gist.github.com/1129031 */
-/*global document, DOMParser*/
-
-(function(DOMParser) {
-  "use strict";
-
-  var
-    proto = DOMParser.prototype
-  , nativeParse = proto.parseFromString
-  ;
-
-  // Firefox/Opera/IE throw errors on unsupported types
-  try {
-    // WebKit returns null on unsupported types
-    if ((new DOMParser()).parseFromString("", "text/html")) {
-      // text/html parsing is natively supported
-      return;
-    }
-  } catch (ex) {}
-
-  proto.parseFromString = function(markup, type) {
-    if (/^\s*text\/html\s*(?:;|$)/i.test(type)) {
-      var
-        doc = document.implementation.createHTMLDocument("")
-      ;
-            if (markup.toLowerCase().indexOf('<!doctype') > -1) {
-              doc.documentElement.innerHTML = markup;
-            }
-            else {
-              doc.body.innerHTML = markup;
-            }
-      return doc;
-    } else {
-      return nativeParse.apply(this, arguments);
-    }
-  };
-}(DOMParser));
-parser = new DOMParser();
-module.exports = function(html,strictChecking){
-  var result = parser.parseFromString(html,'text/html');
-  var el;
-  // Determine if we're interested in the body or just inside
-  if(html.substring(0,10).match(/\<body.+/ig)){
-    el = result.getElementsByTagName('body')[0];
-  }
-  else{
-    el = result.getElementsByTagName('body')[0].firstChild;
-  }
-  var errors = el.getElementsByTagName('parsererror');
-  if(errors && errors.length > 0){
-    if(strictChecking === true){
-      throw new Error(errors[0].textContent);
-    }
-    for(var i = 0; i < errors.length; i++){
-      errors[i].parentElement.removeChild(errors[i]);
-    }
-  }
-  return el;
-};
-},{}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -179,7 +58,7 @@ exports.h = h;
 ;
 exports.default = h;
 
-},{"./is":5,"./vnode":12}],4:[function(require,module,exports){
+},{"./is":3,"./vnode":9}],2:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function createElement(tagName) {
@@ -246,7 +125,7 @@ exports.htmlDomApi = {
 };
 exports.default = exports.htmlDomApi;
 
-},{}],5:[function(require,module,exports){
+},{}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.array = Array.isArray;
@@ -255,33 +134,75 @@ function primitive(s) {
 }
 exports.primitive = primitive;
 
-},{}],6:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-function updateClass(oldVnode, vnode) {
-    var cur, name, elm = vnode.elm, oldClass = oldVnode.data.class, klass = vnode.data.class;
-    if (!oldClass && !klass)
+var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
+    "default", "defaultchecked", "defaultmuted", "defaultselected", "defer", "disabled", "draggable",
+    "enabled", "formnovalidate", "hidden", "indeterminate", "inert", "ismap", "itemscope", "loop", "multiple",
+    "muted", "nohref", "noresize", "noshade", "novalidate", "nowrap", "open", "pauseonexit", "readonly",
+    "required", "reversed", "scoped", "seamless", "selected", "sortable", "spellcheck", "translate",
+    "truespeed", "typemustmatch", "visible"];
+var xlinkNS = 'http://www.w3.org/1999/xlink';
+var xmlNS = 'http://www.w3.org/XML/1998/namespace';
+var colonChar = 58;
+var xChar = 120;
+var booleanAttrsDict = Object.create(null);
+for (var i = 0, len = booleanAttrs.length; i < len; i++) {
+    booleanAttrsDict[booleanAttrs[i]] = true;
+}
+function updateAttrs(oldVnode, vnode) {
+    var key, elm = vnode.elm, oldAttrs = oldVnode.data.attrs, attrs = vnode.data.attrs;
+    if (!oldAttrs && !attrs)
         return;
-    if (oldClass === klass)
+    if (oldAttrs === attrs)
         return;
-    oldClass = oldClass || {};
-    klass = klass || {};
-    for (name in oldClass) {
-        if (!klass[name]) {
-            elm.classList.remove(name);
+    oldAttrs = oldAttrs || {};
+    attrs = attrs || {};
+    // update modified attributes, add new attributes
+    for (key in attrs) {
+        var cur = attrs[key];
+        var old = oldAttrs[key];
+        if (old !== cur) {
+            if (booleanAttrsDict[key]) {
+                if (cur) {
+                    elm.setAttribute(key, "");
+                }
+                else {
+                    elm.removeAttribute(key);
+                }
+            }
+            else {
+                if (key.charCodeAt(0) !== xChar) {
+                    elm.setAttribute(key, cur);
+                }
+                else if (key.charCodeAt(3) === colonChar) {
+                    // Assume xml namespace
+                    elm.setAttributeNS(xmlNS, key, cur);
+                }
+                else if (key.charCodeAt(5) === colonChar) {
+                    // Assume xlink namespace
+                    elm.setAttributeNS(xlinkNS, key, cur);
+                }
+                else {
+                    elm.setAttribute(key, cur);
+                }
+            }
         }
     }
-    for (name in klass) {
-        cur = klass[name];
-        if (cur !== oldClass[name]) {
-            elm.classList[cur ? 'add' : 'remove'](name);
+    // remove removed attributes
+    // use `in` operator since the previous `for` iteration uses it (.i.e. add even attributes with undefined value)
+    // the other option is to remove all attributes with value == undefined
+    for (key in oldAttrs) {
+        if (!(key in attrs)) {
+            elm.removeAttribute(key);
         }
     }
 }
-exports.classModule = { create: updateClass, update: updateClass };
-exports.default = exports.classModule;
+exports.attributesModule = { create: updateAttrs, update: updateAttrs };
+exports.default = exports.attributesModule;
 
-},{}],7:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function invokeHandler(handler, vnode, event) {
@@ -377,7 +298,7 @@ exports.eventListenersModule = {
 };
 exports.default = exports.eventListenersModule;
 
-},{}],8:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function updateProps(oldVnode, vnode) {
@@ -404,94 +325,7 @@ function updateProps(oldVnode, vnode) {
 exports.propsModule = { create: updateProps, update: updateProps };
 exports.default = exports.propsModule;
 
-},{}],9:[function(require,module,exports){
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-var raf = (typeof window !== 'undefined' && window.requestAnimationFrame) || setTimeout;
-var nextFrame = function (fn) { raf(function () { raf(fn); }); };
-function setNextFrame(obj, prop, val) {
-    nextFrame(function () { obj[prop] = val; });
-}
-function updateStyle(oldVnode, vnode) {
-    var cur, name, elm = vnode.elm, oldStyle = oldVnode.data.style, style = vnode.data.style;
-    if (!oldStyle && !style)
-        return;
-    if (oldStyle === style)
-        return;
-    oldStyle = oldStyle || {};
-    style = style || {};
-    var oldHasDel = 'delayed' in oldStyle;
-    for (name in oldStyle) {
-        if (!style[name]) {
-            if (name[0] === '-' && name[1] === '-') {
-                elm.style.removeProperty(name);
-            }
-            else {
-                elm.style[name] = '';
-            }
-        }
-    }
-    for (name in style) {
-        cur = style[name];
-        if (name === 'delayed' && style.delayed) {
-            for (var name2 in style.delayed) {
-                cur = style.delayed[name2];
-                if (!oldHasDel || cur !== oldStyle.delayed[name2]) {
-                    setNextFrame(elm.style, name2, cur);
-                }
-            }
-        }
-        else if (name !== 'remove' && cur !== oldStyle[name]) {
-            if (name[0] === '-' && name[1] === '-') {
-                elm.style.setProperty(name, cur);
-            }
-            else {
-                elm.style[name] = cur;
-            }
-        }
-    }
-}
-function applyDestroyStyle(vnode) {
-    var style, name, elm = vnode.elm, s = vnode.data.style;
-    if (!s || !(style = s.destroy))
-        return;
-    for (name in style) {
-        elm.style[name] = style[name];
-    }
-}
-function applyRemoveStyle(vnode, rm) {
-    var s = vnode.data.style;
-    if (!s || !s.remove) {
-        rm();
-        return;
-    }
-    var name, elm = vnode.elm, i = 0, compStyle, style = s.remove, amount = 0, applied = [];
-    for (name in style) {
-        applied.push(name);
-        elm.style[name] = style[name];
-    }
-    compStyle = getComputedStyle(elm);
-    var props = compStyle['transition-property'].split(', ');
-    for (; i < props.length; ++i) {
-        if (applied.indexOf(props[i]) !== -1)
-            amount++;
-    }
-    elm.addEventListener('transitionend', function (ev) {
-        if (ev.target === elm)
-            --amount;
-        if (amount === 0)
-            rm();
-    });
-}
-exports.styleModule = {
-    create: updateStyle,
-    update: updateStyle,
-    destroy: applyDestroyStyle,
-    remove: applyRemoveStyle
-};
-exports.default = exports.styleModule;
-
-},{}],10:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -799,7 +633,7 @@ function init(modules, domApi) {
 }
 exports.init = init;
 
-},{"./h":3,"./htmldomapi":4,"./is":5,"./thunk":11,"./vnode":12}],11:[function(require,module,exports){
+},{"./h":1,"./htmldomapi":2,"./is":3,"./thunk":8,"./vnode":9}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var h_1 = require("./h");
@@ -847,7 +681,7 @@ exports.thunk = function thunk(sel, key, fn, args) {
 };
 exports.default = exports.thunk;
 
-},{"./h":3}],12:[function(require,module,exports){
+},{"./h":1}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function vnode(sel, data, children, text, elm) {
@@ -858,7 +692,7 @@ function vnode(sel, data, children, text, elm) {
 exports.vnode = vnode;
 exports.default = vnode;
 
-},{}],13:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 var LT = "<";
 var GT = ">";
 var SINGLE_QUTO = "'";
@@ -1090,7 +924,7 @@ function transfer () {
 function compiler (txt) {
     code = "var html='";
     text = txt;
-     var length = text.length;
+    var length = text.length;
     while (index < length) {
         transfer();
     }
@@ -1100,13 +934,12 @@ function compiler (txt) {
 
 module.exports = compiler;
 
-},{}],14:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var snabbdom = require('snabbdom');
 var patch = snabbdom.init([ // Init patch function with chosen modules
-  require('snabbdom/modules/class').default, // makes it easy to toggle classes
-  require('snabbdom/modules/props').default, // for setting properties on DOM elements
-  require('snabbdom/modules/style').default, // handles styling on elements with support for animations
-  require('snabbdom/modules/eventlisteners').default // attaches event listeners
+    require('snabbdom/modules/props').default,
+    require('snabbdom/modules/attributes').default, // for setting properties on DOM elements
+    require('snabbdom/modules/eventlisteners').default // attaches event listeners
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 
@@ -1114,8 +947,6 @@ var compiler = require('./compiler');
 var render = require('./render');
 var Observer = require('./observer');
 var parser = require('./parser');
-
-var dom2script = require('dom2hscript');
 
 /**
  * From Babel
@@ -1156,9 +987,7 @@ window.WebScript = function (data, options) {
     function repatch() {
         var html = render(code, data);
 
-        //var hyerscript = dom2script.parseHTML(html);
-        hyerscript = parser(html);
-        // console.log(parser(html));
+        var hyerscript = parser(html);
 
         var _vnode = eval(hyerscript);
 
@@ -1167,22 +996,22 @@ window.WebScript = function (data, options) {
         vnode = _vnode;
     }
 };
-},{"./compiler":13,"./observer":18,"./parser":19,"./render":20,"dom2hscript":1,"snabbdom":10,"snabbdom/h":3,"snabbdom/modules/class":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8,"snabbdom/modules/style":9}],15:[function(require,module,exports){
+},{"./compiler":10,"./observer":15,"./parser":16,"./render":17,"snabbdom":7,"snabbdom/h":1,"snabbdom/modules/attributes":4,"snabbdom/modules/eventlisteners":5,"snabbdom/modules/props":6}],12:[function(require,module,exports){
 module.exports = function (array) {
     return toString.call(array) === '[object Array]';
 };
 
-},{}],16:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 module.exports = function (fn) {
     return toString.call(fn) === '[object Function]';
 };
 
-},{}],17:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
 module.exports = function (obj) {
     return toString.call(obj) === '[object Object]';
 };
 
-},{}],18:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 var isFunction = require('./lib/isFunction');
 var isObject = require('./lib/isObject');
 var isArray = require('./lib/isArray');
@@ -1262,7 +1091,7 @@ module.exports = function Observer(obj) {
         detach: detach
     };
 };
-},{"./lib/isArray":15,"./lib/isFunction":16,"./lib/isObject":17}],19:[function(require,module,exports){
+},{"./lib/isArray":12,"./lib/isFunction":13,"./lib/isObject":14}],16:[function(require,module,exports){
 var domParser = new DOMParser();
 
 function parseFromString(string) {
@@ -1284,31 +1113,56 @@ function parseDOM(element) {
 
     // 解析属性
     var attributes = element.attributes;
-    var attributeList = [];
+
+    var hData = {
+        attrsList: [],
+        propsList: [],
+        onList: []
+    };
+
     for(var i = 0, length = attributes.length; i < length; i++) {
         var name = attributes[i].name;
         var value = attributes[i].value;
-        // 如果是 <input>，并且 value 属性的值是 : 开头的合法变量名，则绑定函数
-        if (name == 'value' && /^:[$[a-z]/i.test(value.trim()) && tagName == 'INPUT') {
-            var match = /^:([^\s]+)/.exec(value.trim());
-            var bindName = "data" + (/^\[/.test(match[1]) ?  "" : ".") + match[1];
-            attributeList.push("on:{input:function(event){" +
-                                    "var self = this;" +
-                                    bindName + "=event.target.value;" +
-                                    "observer.attach(function(){" +
-                                        "event.target.value=" + bindName +
-                                    "})" +
-                                "}}");
+
+        // Var Bind
+        if (name == "name" && isBindVar(value) && (tagName == "INPUT" || tagName == "TEXTAREA" || tagName == "SELECT")) {
+            var bindVarName = getBindVar(value);
+            if (element.type == 'radio') {
+                hData.propsList.push(buildKeyValue("checked", parseValue(element.value) + "==" + bindVarName));
+
+                hData.onList.push(buildKeyValue("change", "function(event){" + bindVarName + "=event.target.value}"))
+            }
+            else if (element.type == 'checkbox') {
+                hData.propsList.push(buildKeyValue("checked", bindVarName));
+
+                hData.onList.push(buildKeyValue("change", "function(event){" + bindVarName + "=event.target.checked}"))
+            }
+            else {
+                hData.propsList.push(buildKeyValue("value", bindVarName));
+
+                hData.onList.push(buildKeyValue("input", "function(event){" + bindVarName + "=event.target.value}"));
+            }
+        }
+        // On Event
+        else if (/^on/i.test(name) && isBindVar(value)) {
+            var bindVarName = getBindVar(value);
+            hData.onList.push(buildKeyValue(name.slice(2), bindVarName));
         }
         else if (name != 'id' && name != 'class') {
-            attributeList.push('"' + name + '":' + JSON.stringify(value));
+            hData.attrsList.push(parseAttrName(name)+ ':' + parseAttrValue(value));
         }
     }
 
-    output += "',{" + attributeList.join(",") + "}";
+    output += "',{";
+
+    for(var name in hData) {
+        if (hData[name].length > 0) {
+            output += name.slice(0,-4) + ":{" + hData[name].join(",") + "},";
+        }
+    }
 
     // 解析子元素
-    output += ',[';
+    output += '},[';
     for(var i = 0, length = element.childNodes.length; i < length; i++){
         var child = element.childNodes[i];
         if (child.nodeType == Node.TEXT_NODE) {
@@ -1323,11 +1177,36 @@ function parseDOM(element) {
     return output;
 }
 
+function isBindVar (value) {
+    return /^:[$[a-z]/i.test(value.trim());
+}
+
+function getBindVar (value) {
+    var match = /^:([^\s]+)/.exec(value.trim());
+    return "data" + (/^\[/.test(match[1]) ?  "" : ".") + match[1];
+}
+
+function parseAttrName (name) {
+    return '"' + name + '"';
+}
+
+function parseAttrValue (value) {
+    return JSON.stringify(value);
+}
+
+function buildKeyValue (key, value) {
+    return key + ":" + value;
+}
+
+function parseValue (value) {
+    return JSON.stringify(value);
+}
+
 module.exports = function (html) {
     return parseDOM(parseFromString(html));
 };
 
-},{}],20:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 /**
  * Render Function
  *
@@ -1341,4 +1220,4 @@ module.exports = function (code, data) {
     eval('fn=' + code);
     return fn.apply(this, Object.values(data));
 };
-},{}]},{},[14]);
+},{}]},{},[11]);

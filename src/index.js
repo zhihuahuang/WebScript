@@ -1,9 +1,8 @@
 var snabbdom = require('snabbdom');
 var patch = snabbdom.init([ // Init patch function with chosen modules
-  require('snabbdom/modules/class').default, // makes it easy to toggle classes
-  require('snabbdom/modules/props').default, // for setting properties on DOM elements
-  require('snabbdom/modules/style').default, // handles styling on elements with support for animations
-  require('snabbdom/modules/eventlisteners').default // attaches event listeners
+    require('snabbdom/modules/props').default,
+    require('snabbdom/modules/attributes').default, // for setting properties on DOM elements
+    require('snabbdom/modules/eventlisteners').default // attaches event listeners
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 
@@ -11,8 +10,6 @@ var compiler = require('./compiler');
 var render = require('./render');
 var Observer = require('./observer');
 var parser = require('./parser');
-
-var dom2script = require('dom2hscript');
 
 /**
  * From Babel
@@ -53,9 +50,7 @@ window.WebScript = function (data, options) {
     function repatch() {
         var html = render(code, data);
 
-        //var hyerscript = dom2script.parseHTML(html);
-        hyerscript = parser(html);
-        // console.log(parser(html));
+        var hyerscript = parser(html);
 
         var _vnode = eval(hyerscript);
 

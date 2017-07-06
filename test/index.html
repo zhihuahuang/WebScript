@@ -5,7 +5,7 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>WebScript - Demo</title>
 </head>
 <body>
     <div>
@@ -19,23 +19,60 @@
         <% } else {%>
         <p>Random is Event</p>
         <% } %>
-        <input type="text" value=":number">
-        Number: ${number}
+        <ul>
+            <%
+                var list = ['item1', 'item2', 'item3'];
+                for(var i=0; i < list.length; i++) {
+            %>
+            <li>${list[i]}</li>
+            <% } %>
+        </ul>
+        <div>
+            <input type="text" name=":text">
+            Text: ${text}
+        </div>
+        <div>
+            <textarea name=":longtext"></textarea>
+            LongText: ${longtext}
+        </div>
+        <div>
+            <input type="radio" name=":sex" value="boy"> Boy
+            <input type="radio" name=":sex" value="girl"> Girl
+            Sex: ${sex}
+        </div>
+        <div>
+            <input type="checkbox" name=":open">
+            Open: ${open}
+        </div>
+        <div>
+            <select name=":city">
+                <option value="Beijing">Beijing</option>
+                <option value="New York">New York</option>
+                <option value="London">London</option>
+            </select>
+            City: ${city}
+        </div>
+        <button onclick=":show">Show</button>
     </div>
     <script src="../dist/webscript.js"></script>
     <script>
-//        (function () {
-            var data = {
-                time: Date.now(),
-                number: 1
-            };
+        var data = {
+            time: Date.now(),
+            text: "Hello World",
+            longtext: "This is a \n new line.",
+            sex: 'unknow',
+            open: true,
+            city: 'unknow',
+            show: function () {
+                alert('You click a button~');
+            }
+        };
 
-            setInterval(function () {
-                data.time = Date.now();
-            }, 1000);
+//        setInterval(function () {
+//            data.time = Date.now();
+//        }, 1000);
 
-            var webscript = new WebScript(data);
-//        }());
+        var webscript = new WebScript(data);
     </script>
 </body>
 </html>

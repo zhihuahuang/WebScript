@@ -19,31 +19,56 @@ function parseDOM(element) {
 
     // 解析属性
     var attributes = element.attributes;
-    var attributeList = [];
+
+    var hData = {
+        attrsList: [],
+        propsList: [],
+        onList: []
+    };
+
     for(var i = 0, length = attributes.length; i < length; i++) {
         var name = attributes[i].name;
         var value = attributes[i].value;
-        // 如果是 <input>，并且 value 属性的值是 : 开头的合法变量名，则绑定函数
-        if (name == 'value' && /^:[$[a-z]/i.test(value.trim()) && tagName == 'INPUT') {
-            var match = /^:([^\s]+)/.exec(value.trim());
-            var bindName = "data" + (/^\[/.test(match[1]) ?  "" : ".") + match[1];
-            attributeList.push("on:{input:function(event){" +
-                                    "var self = this;" +
-                                    bindName + "=event.target.value;" +
-                                    "observer.attach(function(){" +
-                                        "event.target.value=" + bindName +
-                                    "})" +
-                                "}}");
+
+        // Var Bind
+        if (name == "name" && isBindVar(value) && (tagName == "INPUT" || tagName == "TEXTAREA" || tagName == "SELECT")) {
+            var bindVarName = getBindVar(value);
+            if (element.type == 'radio') {
+                hData.propsList.push(buildKeyValue("checked", parseValue(element.value) + "==" + bindVarName));
+
+                hData.onList.push(buildKeyValue("change", "function(event){" + bindVarName + "=event.target.value}"))
+            }
+            else if (element.type == 'checkbox') {
+                hData.propsList.push(buildKeyValue("checked", bindVarName));
+
+                hData.onList.push(buildKeyValue("change", "function(event){" + bindVarName + "=event.target.checked}"))
+            }
+            else {
+                hData.propsList.push(buildKeyValue("value", bindVarName));
+
+                hData.onList.push(buildKeyValue("input", "function(event){" + bindVarName + "=event.target.value}"));
+            }
+        }
+        // On Event
+        else if (/^on/i.test(name) && isBindVar(value)) {
+            var bindVarName = getBindVar(value);
+            hData.onList.push(buildKeyValue(name.slice(2), bindVarName));
         }
         else if (name != 'id' && name != 'class') {
-            attributeList.push('"' + name + '":' + JSON.stringify(value));
+            hData.attrsList.push(parseAttrName(name)+ ':' + parseAttrValue(value));
         }
     }
 
-    output += "',{" + attributeList.join(",") + "}";
+    output += "',{";
+
+    for(var name in hData) {
+        if (hData[name].length > 0) {
+            output += name.slice(0,-4) + ":{" + hData[name].join(",") + "},";
+        }
+    }
 
     // 解析子元素
-    output += ',[';
+    output += '},[';
     for(var i = 0, length = element.childNodes.length; i < length; i++){
         var child = element.childNodes[i];
         if (child.nodeType == Node.TEXT_NODE) {
@@ -56,6 +81,31 @@ function parseDOM(element) {
     output += "])";
 
     return output;
+}
+
+function isBindVar (value) {
+    return /^:[$[a-z]/i.test(value.trim());
+}
+
+function getBindVar (value) {
+    var match = /^:([^\s]+)/.exec(value.trim());
+    return "data" + (/^\[/.test(match[1]) ?  "" : ".") + match[1];
+}
+
+function parseAttrName (name) {
+    return '"' + name + '"';
+}
+
+function parseAttrValue (value) {
+    return JSON.stringify(value);
+}
+
+function buildKeyValue (key, value) {
+    return key + ":" + value;
+}
+
+function parseValue (value) {
+    return JSON.stringify(value);
 }
 
 module.exports = function (html) {

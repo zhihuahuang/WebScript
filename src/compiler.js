@@ -229,7 +229,7 @@ function transfer () {
 function compiler (txt) {
     code = "var html='";
     text = txt;
-     var length = text.length;
+    var length = text.length;
     while (index < length) {
         transfer();
     }

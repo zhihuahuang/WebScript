@@ -1,6 +1,8 @@
-# WebScript（开发中）
+# WebScript
 
-WebScript 是一个语义化的前端框架。
+![version](https://img.shields.io/badge/version-0.2.0-green.svg)
+
+WebScript 是一个灵活、语义化的轻量级前端框架。
 
 *目前仍处于开发阶段，语法等有可能会发生改变。*
 
@@ -63,16 +65,30 @@ WebScript 是一个语义化的前端框架。
 
 变量绑定以 `:` 开头，后面接需要绑定的变量名，只支持表单元素的绑定。
 
+### 输入框绑定（草案）
+
 ```html
-<input type="text" value=":name">
+<input type="text" name=":name" value="Hello World">
 ```
 
-## 事件
+### 单选框绑定（草案）
 
-```javascript
-<button on-click="show">Button</button>
+```html
+<input type="radio" name=":type" value="1">
+<input type="radio" name=":type" value="2">
+<input type="radio" name=":type" value="3">
+```
+
+### 复选框绑定（草案）
+
+```html
+<input type="checkbox" name=":isopen">
+```
+
+## 事件（草案）
+
+```html
+<button onclick=":show">Button</button>
 ```
 
 ## 其他
-
-## 废弃
