@@ -25,6 +25,33 @@ function __classCallCheck(instance, Constructor) {
     }
 }
 
+/**
+ * document.hidden
+ *
+ * @returns {*}
+ */
+function documentHidden() {
+    var props = ['hidden', 'mozHidden', 'webkitHidden'];
+    for (var i = 0, length = props.length; i < length; i++) {
+        if (props[i] in document) {
+            return document[props[i]];
+        }
+    }
+    return false;
+}
+
+function addEventListener(element, event, handler) {
+    event.trim().split(/\s+/).forEach(function (name) {
+        element.addEventListener(name, handler);
+    });
+}
+
+function removeEventListener(element, event, handler) {
+    event.trim().split(/\s+/).forEach(function (name) {
+        element.removeEventListener(name, handler);
+    });
+}
+
 window.WebScript = function (data, options) {
     __classCallCheck(this, WebScript);
 
@@ -42,20 +69,53 @@ window.WebScript = function (data, options) {
 
     var observer = new Observer(data);
     var vnode;
+    var timer;
+    var visibilitychangeListener;
 
-    observer.attach(repatch);
+    observer.attach(redraw);
 
-    repatch();
-    
-    function repatch() {
+    redraw();
+
+    function redraw() {
         var html = render(code, data);
 
         var hyerscript = parser(html);
 
-        var _vnode = eval(hyerscript);
+        var vnodeTemp = eval(hyerscript);
 
-        patch(vnode || element, _vnode);
+        // 如果页面被隐藏了，则减少重绘
+        if (documentHidden()) {
+            if (!visibilitychangeListener) {
+                addEventListener(document, 'visibilitychange', function fn () {
+                    removeEventListener(document, 'visibilitychange', fn);
+                    visibilitychangeListener();
+                    visibilitychangeListener = null;
+                });
+            }
 
-        vnode = _vnode;
+            visibilitychangeListener = function () {
+                repatch(vnodeTemp);
+            };
+        }
+        else {
+            repatch(vnodeTemp);
+        }
+    }
+
+    /**
+     *
+     *
+     * @param newVnode
+     */
+    function repatch(newVnode) {
+        if (timer) {
+            cancelAnimationFrame(timer);
+        }
+
+        timer = requestAnimationFrame(function() {
+            timer = null;
+            patch(vnode || element, newVnode);
+            vnode = newVnode;
+        });
     }
 };

@@ -62,11 +62,7 @@ module.exports = function Observer(obj) {
 
     function notify (event) {
         for (var i=0, length = subscribes.length; i < length; i++) {
-            (function(fn) {
-                setTimeout(function() {
-                    fn(event);
-                }, 0);
-            }(subscribes[i]));
+            subscribes[i](event);
         }
     }
 

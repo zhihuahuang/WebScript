@@ -962,6 +962,33 @@ function __classCallCheck(instance, Constructor) {
     }
 }
 
+/**
+ * document.hidden
+ *
+ * @returns {*}
+ */
+function documentHidden() {
+    var props = ['hidden', 'mozHidden', 'webkitHidden'];
+    for (var i = 0, length = props.length; i < length; i++) {
+        if (props[i] in document) {
+            return document[props[i]];
+        }
+    }
+    return false;
+}
+
+function addEventListener(element, event, handler) {
+    event.trim().split(/\s+/).forEach(function (name) {
+        element.addEventListener(name, handler);
+    });
+}
+
+function removeEventListener(element, event, handler) {
+    event.trim().split(/\s+/).forEach(function (name) {
+        element.removeEventListener(name, handler);
+    });
+}
+
 window.WebScript = function (data, options) {
     __classCallCheck(this, WebScript);
 
@@ -980,20 +1007,60 @@ window.WebScript = function (data, options) {
     var observer = new Observer(data);
     var vnode;
 
-    observer.attach(repatch);
+    observer.attach(redraw);
 
-    repatch();
-    
-    function repatch() {
+    redraw();
+
+    var timeId;
+
+    var visibilitychangeListener;
+
+    function redraw() {
+        console.log('redraw');
+
         var html = render(code, data);
 
         var hyerscript = parser(html);
 
-        var _vnode = eval(hyerscript);
+        var vnodeTemp = eval(hyerscript);
 
-        patch(vnode || element, _vnode);
+        // 如果页面被隐藏了，则减少重绘
+        if (documentHidden()) {
+            console.log('hidden');
 
-        vnode = _vnode;
+            if (!visibilitychangeListener) {
+                addEventListener(document, 'visibilitychange', function fn () {
+                    console.log('visibilitychange');
+                    removeEventListener(document, 'visibilitychange', fn);
+                    visibilitychangeListener();
+                    visibilitychangeListener = null;
+                });
+            }
+
+            visibilitychangeListener = function () {
+                repatch(vnodeTemp);
+            };
+        }
+        else {
+            repatch(vnodeTemp);
+        }
+    }
+
+    /**
+     *
+     *
+     * @param newVnode
+     */
+    function repatch(newVnode) {
+        if (timeId) {
+            cancelAnimationFrame(timeId);
+        }
+
+        timeId = requestAnimationFrame(function() {
+            timeId = null;
+            patch(vnode || element, newVnode);
+            vnode = newVnode;
+        });
     }
 };
 },{"./compiler":10,"./observer":15,"./parser":16,"./render":17,"snabbdom":7,"snabbdom/h":1,"snabbdom/modules/attributes":4,"snabbdom/modules/eventlisteners":5,"snabbdom/modules/props":6}],12:[function(require,module,exports){
@@ -1076,11 +1143,7 @@ module.exports = function Observer(obj) {
 
     function notify (event) {
         for (var i=0, length = subscribes.length; i < length; i++) {
-            (function(fn) {
-                setTimeout(function() {
-                    fn(event);
-                }, 0);
-            }(subscribes[i]));
+            subscribes[i](event);
         }
     }
 
