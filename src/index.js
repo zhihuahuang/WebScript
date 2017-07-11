@@ -79,9 +79,7 @@ window.WebScript = function (data, options) {
     function redraw() {
         var html = render(code, data);
 
-        var hyerscript = parser(html);
-
-        var vnodeTemp = eval(hyerscript);
+        var vnodeTemp = parser(html, data, h);
 
         // 如果页面被隐藏了，则减少重绘
         if (documentHidden()) {
@@ -103,12 +101,10 @@ window.WebScript = function (data, options) {
     }
 
     /**
-     *
-     *
      * @param newVnode
      */
     function repatch(newVnode) {
-        if (timer) {
+         if (timer) {
             cancelAnimationFrame(timer);
         }
 

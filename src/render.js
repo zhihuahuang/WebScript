@@ -6,8 +6,8 @@
  * @returns {*}
  */
 module.exports = function (code, data) {
-    var code = 'function(' + Object.keys(data).join(',') + '){' + code + '}';
     var fn;
-    eval('fn=' + code);
+    code = 'fn=function(' + Object.keys(data).join(',') + '){' + code + '}';
+    eval(code);
     return fn.apply(this, Object.values(data));
 };

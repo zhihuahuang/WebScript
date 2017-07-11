@@ -5,109 +5,127 @@ function parseFromString(string) {
     return doc.body.firstChild;
 }
 
-function parseDOM(element) {
-    var tagName = element.tagName;
+function parseDOM (dom, data, h) {
+    var selector = tagName = dom.tagName,
+        hData = {
+            attrs: {},
+            props: {},
+            on: {}
+        },
+        children = [];
 
-    var output = "h('" + tagName;
-
-    if (element.id) {
-        output += '#' + element.id;
+    if (dom.id) {
+        selector += '#' + dom.id;
     }
-    if (element.className) {
-        output += '.' + element.className.trim().replace(/\s+/, '.');
+    if (dom.className) {
+        selector += '.' + dom.className.trim().replace(/\s+/, '.');
     }
 
     // 解析属性
-    var attributes = element.attributes;
+    var attributes = dom.attributes;
 
-    var hData = {
-        attrsList: [],
-        propsList: [],
-        onList: []
-    };
+    var i,
+        length;
 
-    for(var i = 0, length = attributes.length; i < length; i++) {
-        var name = attributes[i].name;
-        var value = attributes[i].value;
-
-        // Var Bind
-        if (name == "name" && isBindVar(value) && (tagName == "INPUT" || tagName == "TEXTAREA" || tagName == "SELECT")) {
-            var bindVarName = getBindVar(value);
-            if (element.type == 'radio') {
-                hData.propsList.push(buildKeyValue("checked", parseValue(element.value) + "==" + bindVarName));
-
-                hData.onList.push(buildKeyValue("change", "function(event){" + bindVarName + "=event.target.value}"))
+    for(i = 0, length = attributes.length; i < length; i++) {
+        (function (name, value) {
+            var eventMatch = /^on(.*)/.exec(name);
+            var bindMatch = /^:(.*)/.exec(value);
+            // Var Bind
+            if (name == "name" && bindMatch && (tagName == "INPUT" || tagName == "TEXTAREA" || tagName == "SELECT")) {
+                value = bindMatch[1];
+                if (dom.type == 'radio') {
+                    hData.attrs.name = value;
+                    hData.props.checked = (dom.value == getObject(data, value));
+                    hData.on.change = function (event) {
+                        setObject(data, value, event.target.value);
+                    }
+                }
+                else if (dom.type == 'checkbox') {
+                    hData.props.checked = getObject(data, value);
+                    hData.on.change = function (event) {
+                        setObject(data, value, event.target.checked);
+                    }
+                }
+                else {
+                    hData.props.value = getObject(data, value);
+                    hData.on.input = hData.on.change = function (event) {
+                        setObject(data, value, event.target.value);
+                    }
+                }
             }
-            else if (element.type == 'checkbox') {
-                hData.propsList.push(buildKeyValue("checked", bindVarName));
-
-                hData.onList.push(buildKeyValue("change", "function(event){" + bindVarName + "=event.target.checked}"))
+            else if (bindMatch && eventMatch) {
+                hData.on[eventMatch[1]] = getObject(data, bindMatch[1]);
             }
-            else {
-                hData.propsList.push(buildKeyValue("value", bindVarName));
-
-                hData.onList.push(buildKeyValue("input", "function(event){" + bindVarName + "=event.target.value}"));
+            else if (name != 'id' && name != 'class') {
+                hData.attrs[parseName(name)] = value;
             }
-        }
-        // On Event
-        else if (/^on/i.test(name) && isBindVar(value)) {
-            var bindVarName = getBindVar(value);
-            hData.onList.push(buildKeyValue(name.slice(2), bindVarName));
-        }
-        else if (name != 'id' && name != 'class') {
-            hData.attrsList.push(parseAttrName(name)+ ':' + parseAttrValue(value));
-        }
+        }(attributes[i].name, attributes[i].value));
     }
 
-    output += "',{";
-
-    for(var name in hData) {
-        if (hData[name].length > 0) {
-            output += name.slice(0,-4) + ":{" + hData[name].join(",") + "},";
-        }
-    }
-
-    // 解析子元素
-    output += '},[';
-    for(var i = 0, length = element.childNodes.length; i < length; i++){
-        var child = element.childNodes[i];
+    for(i = 0, length = dom.childNodes.length; i < length; i++){
+        var child = dom.childNodes[i];
         if (child.nodeType == Node.TEXT_NODE) {
-            output += JSON.stringify(child.textContent) + ",";
+            children.push(child.textContent);
         }
         else {
-            output += parseDOM(child) + ",";
+            children.push(parseDOM(child, data, h));
         }
     }
-    output += "])";
 
-    return output;
+    return h(selector, hData, children);
 }
 
 function isBindVar (value) {
     return /^:[$[a-z]/i.test(value.trim());
 }
 
-function getBindVar (value) {
-    var match = /^:([^\s]+)/.exec(value.trim());
-    return "data" + (/^\[/.test(match[1]) ?  "" : ".") + match[1];
+function parseName (name) {
+    return name.replace(/-([a-z])/ig, function ($0, $1) {
+        return $1.toUpperCase();
+    });
 }
 
-function parseAttrName (name) {
-    return '"' + name + '"';
+function parseProp(prop) {
+    var propList = [];
+    if (prop.charAt(0) != '[') {
+        propList = prop.split('.');
+    }
+    else {
+        propList = prop.replace(/^\[[\'\"]?|[\'\"]?$/g, '').split(/[\'\"]?\]\[[\'\"]?/); // ['a'][0]
+    }
+
+    return propList;
 }
 
-function parseAttrValue (value) {
-    return JSON.stringify(value);
+function getObject (object, prop, defaultValue) {
+    var propList = parseProp(prop);
+
+    for(var i = 0, length = propList.length; i < length; i++) {
+        if (propList[i] in object) {
+            object = object[propList[i]];
+        }
+        else {
+            return defaultValue;
+        }
+    }
+    return object;
 }
 
-function buildKeyValue (key, value) {
-    return key + ":" + value;
+function setObject (object, prop, value) {
+    var propList = parseProp(prop);
+
+    for(var i = 0, length = propList.length; i < length; i++) {
+        if (i == length-1) {
+            object[propList[i]] = value;
+        }
+        else {
+            object = object[propList[i]];
+        }
+    }
 }
 
-function parseValue (value) {
-    return JSON.stringify(value);
-}
-
-module.exports = function (html) {
-    return parseDOM(parseFromString(html));
+module.exports = function (html, data, h) {
+    var dom = parseFromString(html);
+    return parseDOM(dom, data, h);
 };
