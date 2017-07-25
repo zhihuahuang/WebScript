@@ -1,4 +1,198 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],2:[function(require,module,exports){
+(function (process,global){
+(function(c){function l(a){return a?"object"==typeof a||"function"==typeof a:!1}if(!c.Proxy){var m=null;c.a=function(a,b){function c(){}if(!l(a)||!l(b))throw new TypeError("Cannot create proxy with a non-object as target or handler");m=function(){c=function(a){throw new TypeError("Cannot perform '"+a+"' on a proxy that has been revoked");}};var e=b;b={get:null,set:null,apply:null,construct:null};for(var h in e){if(!(h in b))throw new TypeError("Proxy polyfill does not support trap '"+h+"'");b[h]=
+e[h]}"function"==typeof e&&(b.apply=e.apply.bind(e));var d=this,n=!1,p="function"==typeof a;if(b.apply||b.construct||p)d=function(){var g=this&&this.constructor===d,f=Array.prototype.slice.call(arguments);c(g?"construct":"apply");if(g&&b.construct)return b.construct.call(this,a,f);if(!g&&b.apply)return b.apply(a,this,f);if(p)return g?(f.unshift(a),new (a.bind.apply(a,f))):a.apply(this,f);throw new TypeError(g?"not a constructor":"not a function");},n=!0;var q=b.get?function(a){c("get");return b.get(this,
+a,d)}:function(a){c("get");return this[a]},t=b.set?function(a,f){c("set");b.set(this,a,f,d)}:function(a,b){c("set");this[a]=b},r={};Object.getOwnPropertyNames(a).forEach(function(b){n&&b in d||(Object.defineProperty(d,b,{enumerable:!!Object.getOwnPropertyDescriptor(a,b).enumerable,get:q.bind(a,b),set:t.bind(a,b)}),r[b]=!0)});e=!0;Object.setPrototypeOf?Object.setPrototypeOf(d,Object.getPrototypeOf(a)):d.__proto__?d.__proto__=a.__proto__:e=!1;if(b.get||!e)for(var k in a)r[k]||Object.defineProperty(d,
+k,{get:q.bind(a,k)});Object.seal(a);Object.seal(d);return d};c.a.b=function(a,b){return{proxy:new c.a(a,b),revoke:m}};c.a.revocable=c.a.b;c.Proxy=c.a}})("undefined"!==typeof process&&"[object process]"=={}.toString.call(process)?global:self);
+
+}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"_process":1}],3:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -58,7 +252,7 @@ exports.h = h;
 ;
 exports.default = h;
 
-},{"./is":3,"./vnode":9}],2:[function(require,module,exports){
+},{"./is":5,"./vnode":11}],4:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function createElement(tagName) {
@@ -125,7 +319,7 @@ exports.htmlDomApi = {
 };
 exports.default = exports.htmlDomApi;
 
-},{}],3:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.array = Array.isArray;
@@ -134,7 +328,7 @@ function primitive(s) {
 }
 exports.primitive = primitive;
 
-},{}],4:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
@@ -202,7 +396,7 @@ function updateAttrs(oldVnode, vnode) {
 exports.attributesModule = { create: updateAttrs, update: updateAttrs };
 exports.default = exports.attributesModule;
 
-},{}],5:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function invokeHandler(handler, vnode, event) {
@@ -298,7 +492,7 @@ exports.eventListenersModule = {
 };
 exports.default = exports.eventListenersModule;
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function updateProps(oldVnode, vnode) {
@@ -325,7 +519,7 @@ function updateProps(oldVnode, vnode) {
 exports.propsModule = { create: updateProps, update: updateProps };
 exports.default = exports.propsModule;
 
-},{}],7:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -633,7 +827,7 @@ function init(modules, domApi) {
 }
 exports.init = init;
 
-},{"./h":1,"./htmldomapi":2,"./is":3,"./thunk":8,"./vnode":9}],8:[function(require,module,exports){
+},{"./h":3,"./htmldomapi":4,"./is":5,"./thunk":10,"./vnode":11}],10:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var h_1 = require("./h");
@@ -681,7 +875,7 @@ exports.thunk = function thunk(sel, key, fn, args) {
 };
 exports.default = exports.thunk;
 
-},{"./h":1}],9:[function(require,module,exports){
+},{"./h":3}],11:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function vnode(sel, data, children, text, elm) {
@@ -692,13 +886,14 @@ function vnode(sel, data, children, text, elm) {
 exports.vnode = vnode;
 exports.default = vnode;
 
-},{}],10:[function(require,module,exports){
-var LT = "<";
-var GT = ">";
-var SINGLE_QUTO = "'";
-var DOUBLE_QUTO = '"';
-var TPL_QUTO = "`";
-var ESCAPE_CHAR = "\\";
+},{}],12:[function(require,module,exports){
+"use strict";
+
+var CHAR_LT = "<";
+var CHAR_GT = ">";
+var CHAR_SINGLE_QUTO = "'";
+var CHAR_DOUBLE_QUTO = '"';
+var CHAR_ESCAPE = "\\";
 
 var STATE_HTML = 0;
 
@@ -713,237 +908,230 @@ var STATE_OUTPUT_DOUBLE_QUTO = 6;
 var STATE_SCRIPT_TAG = 7;
 var STATE_SCRIPT_SINGLE_QUTO = 8;
 var STATE_SCRIPT_DOUBLE_QUTO = 9;
-var STATE_SCRIPT_TPL_QUTO = 10;
-var STATE_SCRIPT_CODE = 11;
+var STATE_SCRIPT_CODE = 10;
 
-var text = '';
-var state = STATE_HTML;
-var code;
-var index = 0;
+module.exports = Compiler;
 
-function transfer () {
-     var char = text.charAt(index);
-
-    switch (state) {
-        case STATE_HTML:
-            if (LT == char && '%' == text.charAt(index+1)) {
-                state = STATE_CODE;
-                code += "';";
-                index++;
-            }
-            else if ('<' == char &&
-                     's' == text.charAt(index+1) &&
-                     'c' == text.charAt(index+2) &&
-                     'r' == text.charAt(index+3) &&
-                     'i' == text.charAt(index+4) &&
-                     'p' == text.charAt(index+5) &&
-                     't' == text.charAt(index+6) &&
-                     /[>\s]/.test(text.charAt(index+7))) {
-                state = STATE_SCRIPT_TAG;
-                code += "<script";
-                index += 6;
-            }
-            else if ('$' == char && '{' == text.charAt(index+1)) {
-                state = STATE_OUTPUT;
-                code += "'+(";
-                index++;
-            }
-            else if ("\r" == char) {
-                code += "\\r";
-            }
-            else if ("\n" == char) {
-                code += "\\n";
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        case STATE_CODE:
-            if (SINGLE_QUTO == char) {
-                state = STATE_CODE_SINGLE_QUTO;
-                code += char;
-            }
-            else if (DOUBLE_QUTO == char) {
-                state = STATE_CODE_DOUBLE_QUTO;
-                code += char;
-            }
-            else if ('%' == char && '>' == text.charAt(index+1)) {
-                state = STATE_HTML;
-                code += ";html+='";
-                index++;
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        // 代码中的单引号
-        case STATE_CODE_SINGLE_QUTO:
-            if (ESCAPE_CHAR == char) {
-                code += char + text.charAt(++index);
-            }
-            else if (SINGLE_QUTO == char) {
-                state = STATE_CODE;
-                code += char;
-            }
-            else {
-                code += char;
-            }
-            break;
-
-         // 代码中的双引号
-        case STATE_CODE_DOUBLE_QUTO:
-            if (ESCAPE_CHAR == char) {
-                code += char + text.charAt(++index);
-            }
-            else if (DOUBLE_QUTO == char) {
-                state = STATE_CODE;
-                code += char;
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        case STATE_OUTPUT:
-            if (SINGLE_QUTO == char) {
-                state = STATE_OUTPUT_SINGLE_QUTO;
-                code += char;
-            }
-            else if (DOUBLE_QUTO == char) {
-                state = STATE_OUTPUT_DOUBLE_QUTO;
-                code += char;
-            }
-            else if ('}' == char) {
-                state = STATE_HTML;
-                code += ")+'";
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        // 代码中的单引号
-        case STATE_OUTPUT_SINGLE_QUTO:
-        case STATE_SCRIPT_SINGLE_QUTO:
-            if (ESCAPE_CHAR == char) {
-                code += char + text.charAt(++index);
-            }
-            else if (SINGLE_QUTO == char) {
-                state = STATE_OUTPUT;
-                code += char;
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        // 代码中的双引号
-        case STATE_OUTPUT_DOUBLE_QUTO:
-            if (ESCAPE_CHAR == char) {
-                code += char + text.charAt(++index);
-            }
-            else if (DOUBLE_QUTO == char) {
-                state = STATE_OUTPUT;
-                code += char;
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        // Script 代码
-        case STATE_SCRIPT_TAG:
-            if (SINGLE_QUTO == char) {
-                state = STATE_SCRIPT_SINGLE_QUTO;
-                code += char;
-            }
-            else if (DOUBLE_QUTO == char) {
-                state = STATE_SCRIPT_DOUBLE_QUTO;
-                code += char;
-            }
-            else if ('>' == char) {
-                state = STATE_SCRIPT_CODE;
-                code += char;
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        case STATE_SCRIPT_CODE:
-            if ('<' == char &&
-                '/' == text.charAt(index+1) &&
-                's' == text.charAt(index+2) &&
-                'c' == text.charAt(index+3) &&
-                'r' == text.charAt(index+4) &&
-                'i' == text.charAt(index+5) &&
-                'p' == text.charAt(index+6) &&
-                't' == text.charAt(index+7) &&
-                '>' == text.charAt(index+8)) {
-                state = STATE_HTML;
-                code += '</script>';
-                index += 8;
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        case STATE_SCRIPT_SINGLE_QUTO:
-            if (ESCAPE_CHAR == char) {
-                code += char + text.charAt(++index);
-            }
-            else if (SINGLE_QUTO == char) {
-                state = STATE_SCRIPT_CODE;
-                code += char;
-            }
-            else {
-                code += char;
-            }
-            break;
-
-        case STATE_SCRIPT_DOUBLE_QUTO:
-            if (ESCAPE_CHAR == char) {
-                code += char + text.charAt(++index);
-            }
-            else if (DOUBLE_QUTO == char) {
-                state = STATE_SCRIPT_CODE;
-                code += char;
-            }
-            else {
-                code += char;
-            }
-            break;
-    }
-
-    index++;
-}
-
-function compiler (txt) {
-    code = "var html='";
-    text = txt;
+/**
+ *
+ * @param text
+ * @returns {{getCode: string}}
+ * @constructor
+ */
+function Compiler(text) {
+    var _var = '_html' + Date.now();
+    var state = STATE_HTML;
+    var codeList = ["var " + _var + "='"];
+    var index = 0;
     var length = text.length;
+
     while (index < length) {
         transfer();
     }
-    code += "';return html;";
-    return code;
+    pushCode("';return " + _var + ";");
+
+    return {
+        getCode: getCode
+    };
+
+    /**
+     *
+     * @returns {string}
+     */
+    function getCode() {
+        return codeList.join('');
+    }
+
+    function pushCode(string) {
+        codeList.push(string);
+    }
+
+    function charAt(string, index) {
+        return string.charAt(index);
+    }
+
+    function toLowerCase(string) {
+        return string.toLowerCase();
+    }
+
+    /**
+     *
+     */
+    function transfer() {
+        var char = charAt(text, index);
+
+        switch (state) {
+            case STATE_HTML:
+                if (CHAR_LT == char && '%' == charAt(text, index + 1)) {
+                    state = STATE_CODE;
+                    pushCode("';");
+                    index++;
+                } else if ('<' == char && 's' == toLowerCase(charAt(text, index + 1)) && 'c' == toLowerCase(charAt(text, index + 2)) && 'r' == toLowerCase(charAt(text, index + 3)) && 'i' == toLowerCase(charAt(text, index + 4)) && 'p' == toLowerCase(charAt(text, index + 5)) && 't' == toLowerCase(charAt(text, index + 6)) && /[>\s]/.test(charAt(text, index + 7))) {
+                    state = STATE_SCRIPT_TAG;
+                    pushCode("<script");
+                    index += 6;
+                } else if ('$' == char && '{' == charAt(text, index + 1)) {
+                    state = STATE_OUTPUT;
+                    pushCode("'+(");
+                    index++;
+                } else if ("\r" == char) {
+                    pushCode("\\r");
+                } else if ("\n" == char) {
+                    pushCode("\\n");
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            case STATE_CODE:
+                if (CHAR_SINGLE_QUTO == char) {
+                    state = STATE_CODE_SINGLE_QUTO;
+                    pushCode(char);
+                } else if (CHAR_DOUBLE_QUTO == char) {
+                    state = STATE_CODE_DOUBLE_QUTO;
+                    pushCode(char);
+                } else if ('%' == char && CHAR_GT == charAt(text, index + 1)) {
+                    state = STATE_HTML;
+                    pushCode(";" + _var + "+='");
+                    index++;
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            // 代码中的单引号
+            case STATE_CODE_SINGLE_QUTO:
+                if (CHAR_ESCAPE == char) {
+                    pushCode(char);
+                    pushCode(charAt(text, ++index));
+                } else if (CHAR_SINGLE_QUTO == char) {
+                    state = STATE_CODE;
+                    pushCode(char);
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            // 代码中的双引号
+            case STATE_CODE_DOUBLE_QUTO:
+                if (CHAR_ESCAPE == char) {
+                    pushCode(char);
+                    pushCode(charAt(text, ++index));
+                } else if (CHAR_DOUBLE_QUTO == char) {
+                    state = STATE_CODE;
+                    pushCode(char);
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            case STATE_OUTPUT:
+                if (CHAR_SINGLE_QUTO == char) {
+                    state = STATE_OUTPUT_SINGLE_QUTO;
+                    pushCode(char);
+                } else if (CHAR_DOUBLE_QUTO == char) {
+                    state = STATE_OUTPUT_DOUBLE_QUTO;
+                    pushCode(char);
+                } else if ('}' == char) {
+                    state = STATE_HTML;
+                    pushCode(")+'");
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            // 代码中的单引号
+            case STATE_OUTPUT_SINGLE_QUTO:
+                if (CHAR_ESCAPE == char) {
+                    pushCode(char);
+                    pushCode(charAt(text, ++index));
+                } else if (CHAR_SINGLE_QUTO == char) {
+                    state = STATE_OUTPUT;
+                    pushCode(char);
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            // 代码中的双引号
+            case STATE_OUTPUT_DOUBLE_QUTO:
+                if (CHAR_ESCAPE == char) {
+                    pushCode(char);
+                    pushCode(charAt(text, ++index));
+                } else if (CHAR_DOUBLE_QUTO == char) {
+                    state = STATE_OUTPUT;
+                    pushCode(char);
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            // Script 代码
+            case STATE_SCRIPT_TAG:
+                if (CHAR_SINGLE_QUTO == char) {
+                    state = STATE_SCRIPT_SINGLE_QUTO;
+                    pushCode(char);
+                } else if (CHAR_DOUBLE_QUTO == char) {
+                    state = STATE_SCRIPT_DOUBLE_QUTO;
+                    pushCode(char);
+                } else if (CHAR_GT == char) {
+                    state = STATE_SCRIPT_CODE;
+                    pushCode(char);
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            case STATE_SCRIPT_CODE:
+                if ('<' == char && '/' == charAt(text, index + 1) && 's' == toLowerCase(charAt(text, index + 2)) && 'c' == toLowerCase(charAt(text, index + 3)) && 'r' == toLowerCase(charAt(text, index + 4)) && 'i' == toLowerCase(charAt(text, index + 5)) && 'p' == toLowerCase(charAt(text, index + 6)) && 't' == toLowerCase(charAt(text, index + 7)) && '>' == charAt(text, index + 8)) {
+                    state = STATE_HTML;
+                    pushCode('</script>');
+                    index += 8;
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            case STATE_SCRIPT_SINGLE_QUTO:
+                if (CHAR_ESCAPE == char) {
+                    pushCode(char);
+                    pushCode(charAt(text, ++index));
+                } else if (CHAR_SINGLE_QUTO == char) {
+                    state = STATE_SCRIPT_CODE;
+                    pushCode(char);
+                } else {
+                    pushCode(char);
+                }
+                break;
+
+            case STATE_SCRIPT_DOUBLE_QUTO:
+                if (CHAR_ESCAPE == char) {
+                    pushCode(char);
+                    pushCode(charAt(text, ++index));
+                } else if (CHAR_DOUBLE_QUTO == char) {
+                    state = STATE_SCRIPT_CODE;
+                    pushCode(char);
+                } else {
+                    pushCode(char);
+                }
+                break;
+        }
+
+        index++;
+    }
 }
 
-module.exports = compiler;
+},{}],13:[function(require,module,exports){
+'use strict';
 
-},{}],11:[function(require,module,exports){
 var snabbdom = require('snabbdom');
-var patch = snabbdom.init([ // Init patch function with chosen modules
-    require('snabbdom/modules/props').default,
-    require('snabbdom/modules/attributes').default, // for setting properties on DOM elements
-    require('snabbdom/modules/eventlisteners').default // attaches event listeners
+var patch = snabbdom.init([// Init patch function with chosen modules
+require('snabbdom/modules/props').default, require('snabbdom/modules/attributes').default, // for setting properties on DOM elements
+require('snabbdom/modules/eventlisteners').default // attaches event listeners
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 
-var compiler = require('./compiler');
+var Compiler = require('./compiler');
 var render = require('./render');
 var Observer = require('./observer');
 var parser = require('./parser');
@@ -989,7 +1177,7 @@ function removeEventListener(element, event, handler) {
     });
 }
 
-window.WebScript = function (data, options) {
+window.WebScript = function (options) {
     __classCallCheck(this, WebScript);
 
     var element;
@@ -997,14 +1185,18 @@ window.WebScript = function (data, options) {
     options = options || {};
     if ('root' in options) {
         element = options.root;
-    }
-    else {
+    } else {
         element = document.body.children[0];
     }
 
-    var code = compiler(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
+    var template = element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>');
 
-    var observer = new Observer(data);
+    var compiler = new Compiler(template);
+
+    var code = compiler.getCode();
+
+    var observer = new Observer(options.data || {});
+
     var vnode;
     var timer;
     var visibilitychangeListener;
@@ -1013,26 +1205,30 @@ window.WebScript = function (data, options) {
 
     redraw();
 
-    function redraw() {
-        var html = render(code, data);
+    return {
+        data: observer.target,
+        on: function on() {}
+    };
 
-        var vnodeTemp = parser(html, data, h);
+    function redraw() {
+        var html = render(code, options.data);
+
+        var vnodeTemp = parser(html, options.data, h);
 
         // 如果页面被隐藏了，则减少重绘
         if (documentHidden()) {
             if (!visibilitychangeListener) {
-                addEventListener(document, 'visibilitychange', function fn () {
+                addEventListener(document, 'visibilitychange', function fn() {
                     removeEventListener(document, 'visibilitychange', fn);
                     visibilitychangeListener();
                     visibilitychangeListener = null;
                 });
             }
 
-            visibilitychangeListener = function () {
+            visibilitychangeListener = function visibilitychangeListener() {
                 repatch(vnodeTemp);
             };
-        }
-        else {
+        } else {
             repatch(vnodeTemp);
         }
     }
@@ -1041,115 +1237,133 @@ window.WebScript = function (data, options) {
      * @param newVnode
      */
     function repatch(newVnode) {
-         if (timer) {
+        if (timer) {
             cancelAnimationFrame(timer);
         }
 
-        timer = requestAnimationFrame(function() {
+        timer = requestAnimationFrame(function () {
             timer = null;
             patch(vnode || element, newVnode);
             vnode = newVnode;
         });
     }
 };
-},{"./compiler":10,"./observer":15,"./parser":16,"./render":17,"snabbdom":7,"snabbdom/h":1,"snabbdom/modules/attributes":4,"snabbdom/modules/eventlisteners":5,"snabbdom/modules/props":6}],12:[function(require,module,exports){
+
+},{"./compiler":12,"./observer":17,"./parser":18,"./render":19,"snabbdom":9,"snabbdom/h":3,"snabbdom/modules/attributes":6,"snabbdom/modules/eventlisteners":7,"snabbdom/modules/props":8}],14:[function(require,module,exports){
+'use strict';
+
 module.exports = function (array) {
     return toString.call(array) === '[object Array]';
 };
 
-},{}],13:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
+'use strict';
+
 module.exports = function (fn) {
     return toString.call(fn) === '[object Function]';
 };
 
-},{}],14:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
+'use strict';
+
 module.exports = function (obj) {
     return toString.call(obj) === '[object Object]';
 };
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
+(function (global){
+'use strict';
+
 var isFunction = require('./lib/isFunction');
 var isObject = require('./lib/isObject');
 var isArray = require('./lib/isArray');
 
 var METHODS = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
 
-module.exports = function Observer(obj) {
+var isSupportProxy = !!(global || self).Proxy;
+
+if (!isSupportProxy) {
+    require('proxy-polyfill/proxy.min');
+}
+
+module.exports = function Observer(target) {
     var subscribes = [];
 
-    recurseObject(obj);
+    target = proxyObject(target, {
+        set: function set(target, prop, value) {
+            target[prop] = value;
+            notify(target, prop, value);
+            return true;
+        }
+    });
 
     return {
         attach: attach,
-        detach: detach
+        detach: detach,
+        target: target
     };
 
-    function attach (fn) {
+    function attach(fn) {
         if (isFunction(fn)) {
             subscribes.push(fn);
         }
     }
 
-    function detach (fn) {
+    function detach(fn) {
         // TODO
     }
 
-    function notify (event) {
-        for (var i=0, length = subscribes.length; i < length; i++) {
+    function notify(event) {
+        for (var i = 0, length = subscribes.length; i < length; i++) {
             subscribes[i](event);
         }
     }
+};
 
-    function defineProperty (object, prop, target) {
-        var value = object[prop];
-
-        Object.defineProperty(object, prop, {
-            get: function () {
-                return value;
-            },
-            set: function (val) {
-                if (isObject(val)) {
-                    recurseObject(val, target);
-                }
-                value = val;
-                notify({
-                    target: target
-                });
-            }
-        });
-    }
-//
-    function recurseObject (object, target) {
-        for (var prop in object) {
-            var value = object[prop];
-
-            defineProperty(object, prop);
-
-            if (isObject(value)) {
-                recurseObject(value, (target || '') + '["' + prop + '"]');
-            }
-            else if (isArray(value)) {
-                recurseArray(value, (target || '') + '["' + prop + '"]');
-            }
+/**
+ *
+ * @param obj
+ * @returns {Proxy}
+ */
+function proxyObject(obj, handler) {
+    for (var prop in obj) {
+        if (isArray(obj[prop])) {
+            obj[prop] = proxyArray(obj[prop], handler);
+        } else if (isObject(obj[prop])) {
+            obj[prop] = proxyObject(obj[prop], handler);
         }
     }
 
-    function recurseArray (array, target) {
+    return new Proxy(obj, handler);
+}
+
+/**
+ *
+ * @param array
+ * @param handler
+ * @returns {*}
+ */
+function proxyArray(array, handler) {
+    if (isSupportProxy) {
+        return new Proxy(array, handler);
+    } else {
         METHODS.forEach(function (name) {
             var fn = array[name];
             Object.defineProperty(array, name, {
-                value: function () {
+                value: function value() {
                     var returnValue = fn.apply(this, arguments);
-                    notify({
-                        target: target
-                    });
+                    handler.set(array, 'length', array.length, array);
                     return returnValue;
                 }
             });
         });
     }
-};
-},{"./lib/isArray":12,"./lib/isFunction":13,"./lib/isObject":14}],16:[function(require,module,exports){
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./lib/isArray":14,"./lib/isFunction":15,"./lib/isObject":16,"proxy-polyfill/proxy.min":2}],18:[function(require,module,exports){
+'use strict';
+
 var domParser = new DOMParser();
 
 function parseFromString(string) {
@@ -1157,13 +1371,14 @@ function parseFromString(string) {
     return doc.body.firstChild;
 }
 
-function parseDOM (dom, data, h) {
-    var selector = tagName = dom.tagName,
+function parseDOM(dom, data, h) {
+    var tagName = dom.tagName,
+        selector = tagName,
         hData = {
-            attrs: {},
-            props: {},
-            on: {}
-        },
+        attrs: {},
+        props: {},
+        on: {}
+    },
         children = [];
 
     if (dom.id) {
@@ -1176,10 +1391,9 @@ function parseDOM (dom, data, h) {
     // 解析属性
     var attributes = dom.attributes;
 
-    var i,
-        length;
+    var i, length;
 
-    for(i = 0, length = attributes.length; i < length; i++) {
+    for (i = 0, length = attributes.length; i < length; i++) {
         (function (name, value) {
             var eventMatch = /^on(.*)/.exec(name);
             var bindMatch = /^:(.*)/.exec(value);
@@ -1188,39 +1402,34 @@ function parseDOM (dom, data, h) {
                 value = bindMatch[1];
                 if (dom.type == 'radio') {
                     hData.attrs.name = value;
-                    hData.props.checked = (dom.value == getObject(data, value));
+                    hData.props.checked = dom.value == getObject(data, value);
                     hData.on.change = function (event) {
                         setObject(data, value, event.target.value);
-                    }
-                }
-                else if (dom.type == 'checkbox') {
+                    };
+                } else if (dom.type == 'checkbox') {
                     hData.props.checked = getObject(data, value);
                     hData.on.change = function (event) {
                         setObject(data, value, event.target.checked);
-                    }
-                }
-                else {
+                    };
+                } else {
                     hData.props.value = getObject(data, value);
                     hData.on.input = hData.on.change = function (event) {
                         setObject(data, value, event.target.value);
-                    }
+                    };
                 }
-            }
-            else if (bindMatch && eventMatch) {
+            } else if (bindMatch && eventMatch) {
                 hData.on[eventMatch[1]] = getObject(data, bindMatch[1]);
-            }
-            else if (name != 'id' && name != 'class') {
+            } else if (name != 'id' && name != 'class') {
                 hData.attrs[parseName(name)] = value;
             }
-        }(attributes[i].name, attributes[i].value));
+        })(attributes[i].name, attributes[i].value);
     }
 
-    for(i = 0, length = dom.childNodes.length; i < length; i++){
+    for (i = 0, length = dom.childNodes.length; i < length; i++) {
         var child = dom.childNodes[i];
         if (child.nodeType == Node.TEXT_NODE) {
             children.push(child.textContent);
-        }
-        else {
+        } else {
             children.push(parseDOM(child, data, h));
         }
     }
@@ -1228,11 +1437,7 @@ function parseDOM (dom, data, h) {
     return h(selector, hData, children);
 }
 
-function isBindVar (value) {
-    return /^:[$[a-z]/i.test(value.trim());
-}
-
-function parseName (name) {
+function parseName(name) {
     return name.replace(/-([a-z])/ig, function ($0, $1) {
         return $1.toUpperCase();
     });
@@ -1242,36 +1447,33 @@ function parseProp(prop) {
     var propList = [];
     if (prop.charAt(0) != '[') {
         propList = prop.split('.');
-    }
-    else {
+    } else {
         propList = prop.replace(/^\[[\'\"]?|[\'\"]?$/g, '').split(/[\'\"]?\]\[[\'\"]?/); // ['a'][0]
     }
 
     return propList;
 }
 
-function getObject (object, prop, defaultValue) {
+function getObject(object, prop, defaultValue) {
     var propList = parseProp(prop);
 
-    for(var i = 0, length = propList.length; i < length; i++) {
+    for (var i = 0, length = propList.length; i < length; i++) {
         if (propList[i] in object) {
             object = object[propList[i]];
-        }
-        else {
+        } else {
             return defaultValue;
         }
     }
     return object;
 }
 
-function setObject (object, prop, value) {
+function setObject(object, prop, value) {
     var propList = parseProp(prop);
 
-    for(var i = 0, length = propList.length; i < length; i++) {
-        if (i == length-1) {
+    for (var i = 0, length = propList.length; i < length; i++) {
+        if (i == length - 1) {
             object[propList[i]] = value;
-        }
-        else {
+        } else {
             object = object[propList[i]];
         }
     }
@@ -1282,7 +1484,9 @@ module.exports = function (html, data, h) {
     return parseDOM(dom, data, h);
 };
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
+'use strict';
+
 /**
  * Render Function
  *
@@ -1291,9 +1495,10 @@ module.exports = function (html, data, h) {
  * @returns {*}
  */
 module.exports = function (code, data) {
-    var fn;
-    code = 'fn=function(' + Object.keys(data).join(',') + '){' + code + '}';
-    eval(code);
-    return fn.apply(this, Object.values(data));
+  var fn;
+  code = 'fn=function(' + Object.keys(data).join(',') + '){' + code + '}';
+  eval(code);
+  return fn.apply(this, Object.values(data));
 };
-},{}]},{},[11]);
+
+},{}]},{},[13]);

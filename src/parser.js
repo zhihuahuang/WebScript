@@ -6,7 +6,8 @@ function parseFromString(string) {
 }
 
 function parseDOM (dom, data, h) {
-    var selector = tagName = dom.tagName,
+    var tagName = dom.tagName,
+        selector = tagName,
         hData = {
             attrs: {},
             props: {},
@@ -74,10 +75,6 @@ function parseDOM (dom, data, h) {
     }
 
     return h(selector, hData, children);
-}
-
-function isBindVar (value) {
-    return /^:[$[a-z]/i.test(value.trim());
 }
 
 function parseName (name) {

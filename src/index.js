@@ -6,7 +6,7 @@ var patch = snabbdom.init([ // Init patch function with chosen modules
 ]);
 var h = require('snabbdom/h').default; // helper function for creating vnodes
 
-var compiler = require('./compiler');
+var Compiler = require('./compiler');
 var render = require('./render');
 var Observer = require('./observer');
 var parser = require('./parser');
@@ -52,7 +52,7 @@ function removeEventListener(element, event, handler) {
     });
 }
 
-window.WebScript = function (data, options) {
+window.WebScript = function (options) {
     __classCallCheck(this, WebScript);
 
     var element;
@@ -65,9 +65,14 @@ window.WebScript = function (data, options) {
         element = document.body.children[0];
     }
 
-    var code = compiler(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
+    var template = element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>');
 
-    var observer = new Observer(data);
+    var compiler = new Compiler(template);
+
+    var code = compiler.getCode();
+
+    var observer = new Observer(options.data || {});
+
     var vnode;
     var timer;
     var visibilitychangeListener;
@@ -76,10 +81,17 @@ window.WebScript = function (data, options) {
 
     redraw();
 
-    function redraw() {
-        var html = render(code, data);
+    return {
+        data: observer.target,
+        on: function () {
+            
+        }
+    };
 
-        var vnodeTemp = parser(html, data, h);
+    function redraw() {
+        var html = render(code, options.data);
+
+        var vnodeTemp = parser(html, options.data, h);
 
         // 如果页面被隐藏了，则减少重绘
         if (documentHidden()) {

@@ -6,6 +6,25 @@ WebScript 是一个灵活、语义化的轻量级前端框架。
 
 *目前仍处于开发阶段，语法等有可能会发生改变。*
 
+## 样例
+
+```html
+<body>
+    <p>${text}</p>
+    <script src="webscript.min.js"></script>
+    <script>
+      (function() {
+          var data = {
+              text: 'Hello World'
+          };
+  	      var webscript = new WebScript({
+              data: data
+	      });
+      }());
+  </script>
+</body>
+```
+
 ## 语法
 
 ### 变量输出

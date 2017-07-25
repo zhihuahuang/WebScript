@@ -58,33 +58,48 @@
             </select>
             City: ${city}
         </div>
+        <div>
+            ${subobj.prop}
+        </div>
     </div>
     <script src="../dist/webscript.js"></script>
     <script>
-        var data = {
-            time: Date.now(),
-            text: "Hello World",
-            longtext: "This is a \n new line.",
-            sex: 'unknow',
-            open: true,
-            city: 'unknow',
-            show: function () {
-                alert('You click a button~');
-            },
-            list: ['item1', 'item2', 'item3'],
-            pushItem: function () {
-                data.list.push('item' + (data.list.length+1));
-            },
-            shiftItem: function () {
-                data.list.shift();
-            }
-        };
+        //(function () {
+            var webscript = new WebScript({
+                data: {
+                    time: Date.now(),
+                    text: "Hello World",
+                    longtext: "This is a \n new line.",
+                    sex: 'unknow',
+                    open: true,
+                    city: 'unknow',
+                    show: function () {
+                        alert('You click a button~');
+                    },
+                    list: ['item1', 'item2', 'item3'],
+                    pushItem: function () {
+                        console.log(this);
+                        data.list.push('item' + (data.list.length+1));
+                    },
+                    shiftItem: function () {
+                        data.list.shift();
+                    },
+                    subobj: {
+                        prop: 1
+                    }
+                }
+            });
 
-        setInterval(function () {
-            data.time = Date.now();
-        }, 1000);
+            var data = webscript.data;
 
-        var webscript = new WebScript(data);
+//            setInterval(function () {
+//                data.time = Date.now();
+//            }, 1000);
+
+            var options = {
+                data: data
+            };
+        //}());
     </script>
 </body>
 </html>
