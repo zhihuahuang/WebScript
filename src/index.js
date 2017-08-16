@@ -8,6 +8,8 @@ const h = require('snabbdom/h').default; // helper function for creating vnodes
 
 require('raf'); // requestAnimationFrame
 
+const EventEmitter = require('eventemitter3');
+
 const Template = require('./template');
 const Observer = require('./observer');
 const parser = require('./parser');
@@ -55,6 +57,14 @@ function removeEventListener(element, event, handler) {
 }
 
 const EVENT_VISIBILITY_CHANGE = 'visibilitychange';
+
+class WebScript {
+
+    constructor ({root}) {
+        this.element;
+    }
+
+}
 
 window.WebScript = function (options) {
     __classCallCheck(this, WebScript);
