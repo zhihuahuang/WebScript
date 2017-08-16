@@ -11,8 +11,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "htmlparser2": "^3.9.2",
+    "core-js": "^2.5.0",
     "proxy-polyfill": "^0.1.7",
+    "raf": "^3.3.2",
     "snabbdom": "^0.6.9"
   },
   "devDependencies": {
@@ -20,7 +21,9 @@
     "babelify": "^7.3.0",
     "browserify": "^14.4.0",
     "gulp": "^3.9.1",
+    "gulp-babel": "^7.0.0",
     "gulp-rename": "^1.2.2",
+    "gulp-replace": "^0.6.1",
     "gulp-uglify": "^3.0.0",
     "mocha": "^3.4.2",
     "vinyl-buffer": "^1.0.0",

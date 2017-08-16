@@ -2,7 +2,7 @@ var isFunction = require('./lib/isFunction');
 var isObject = require('./lib/isObject');
 var isArray = require('./lib/isArray');
 
-var METHODS = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
+const METHODS = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
 
 var isSupportProxy = !!(global || self).Proxy;
 
@@ -38,19 +38,19 @@ module.exports = function Observer(target) {
     }
 
     function notify (event) {
-        for (var i=0, length = subscribes.length; i < length; i++) {
+        for (let i=0; i < subscribes.length; i++) {
             subscribes[i](event);
         }
     }
 };
 
 /**
- *
  * @param obj
+ * @param handler
  * @returns {Proxy}
  */
 function proxyObject (obj, handler) {
-    for(var prop in obj) {
+    for(let prop in obj) {
         if (isArray(obj[prop])) {
             obj[prop] = proxyArray(obj[prop], handler);
         }
@@ -74,10 +74,10 @@ function proxyArray (array, handler) {
     }
     else {
         METHODS.forEach(function (name) {
-            var fn = array[name];
+            let fn = array[name];
             Object.defineProperty(array, name, {
                 value: function () {
-                    var returnValue = fn.apply(this, arguments);
+                    let returnValue = fn.apply(this, arguments);
                     handler.set(array, 'length', array.length, array);
                     return returnValue;
                 }

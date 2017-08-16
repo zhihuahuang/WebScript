@@ -62,7 +62,7 @@
             ${subobj.prop}
         </div>
     </div>
-    <script src="../dist/webscript.js"></script>
+    <script src="../dist/webscript.min.js"></script>
     <script>
         //(function () {
             var webscript = new WebScript({
@@ -92,9 +92,9 @@
 
             var data = webscript.data;
 
-//            setInterval(function () {
-//                data.time = Date.now();
-//            }, 1000);
+           setInterval(function () {
+               data.time = Date.now();
+           }, 1000);
 
             var options = {
                 data: data

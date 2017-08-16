@@ -1,3 +1,9 @@
+/************
+ * Compiler *
+ ************/
+
+require('core-js/fn/string/at');
+
 const CHAR_LT = "<";
 const CHAR_GT = ">";
 const CHAR_SINGLE_QUTO = "'";
@@ -19,256 +25,245 @@ const STATE_SCRIPT_SINGLE_QUTO = 8;
 const STATE_SCRIPT_DOUBLE_QUTO = 9;
 const STATE_SCRIPT_CODE = 10;
 
-module.exports = Compiler;
+class Compiler {
 
-/**
- *
- * @param text
- * @returns {{getCode: string}}
- * @constructor
- */
-function Compiler (text) {
-    var _var = '_html' + Date.now();
-    var state = STATE_HTML;
-    var codeList = [`var ${_var}='`];
-    var index = 0;
-    var length = text.length;
+    constructor(text) {
+        const VAR_NAME = `_html_${Date.now()}`;
 
-    while (index < length) {
-        transfer();
-    }
-    pushCode(`';return ${_var};`);
+        let self = this;
 
-    return {
-        getCode: getCode
-    };
+        self.text = text;
+        self.state = STATE_HTML;
+        self.index = 0;
+        self.codeArray = [ `var ${VAR_NAME}='` ];
 
-    /**
-     *
-     * @returns {string}
-     */
-    function getCode () {
-        return codeList.join('');
+        while (self.index < self.text.length) {
+            self.transfer(`;${VAR_NAME}+='`);
+        }
+
+        self.append(`';return ${VAR_NAME};`);
     }
 
-    function pushCode (string) {
-        codeList.push(string);
+    getChar(offset = 0) {
+        return this.text.at(this.index + offset);
     }
 
-    function charAt (string, index) {
-        return string.charAt(index);
+    getCode() {
+        return this.codeArray.join('');
     }
 
-    function toLowerCase (string) {
-        return string.toLowerCase();
+    append(code) {
+        this.codeArray.push(code);
     }
 
-    /**
-     *
-     */
-    function transfer () {
-        var char = charAt(text, index);
+    transfer(code) {
+        let self = this;
+        let char = self.getChar();
 
-        switch (state) {
+        switch (self.state) {
             case STATE_HTML:
-                if (CHAR_LT == char && '%' == charAt(text, index+1)) {
-                    state = STATE_CODE;
-                    pushCode("';");
-                    index++;
+                if (CHAR_LT === char && '%' === self.getChar(1)) {
+                    self.state = STATE_CODE;
+                    self.append("';");
+                    self.index++;
                 }
-                else if ('<' == char &&
-                    's' == toLowerCase(charAt(text, index+1)) &&
-                    'c' == toLowerCase(charAt(text, index+2)) &&
-                    'r' == toLowerCase(charAt(text, index+3)) &&
-                    'i' == toLowerCase(charAt(text, index+4)) &&
-                    'p' == toLowerCase(charAt(text, index+5)) &&
-                    't' == toLowerCase(charAt(text, index+6)) &&
-                    /[>\s]/.test(charAt(text, index+7))) {
-                    state = STATE_SCRIPT_TAG;
-                    pushCode("<script");
-                    index += 6;
+                else if ('<' === char &&
+                    's' === toLowerCase(self.getChar(1)) &&
+                    'c' === toLowerCase(self.getChar(2)) &&
+                    'r' === toLowerCase(self.getChar(3)) &&
+                    'i' === toLowerCase(self.getChar(4)) &&
+                    'p' === toLowerCase(self.getChar(5)) &&
+                    't' === toLowerCase(self.getChar(6)) &&
+                    /[>\s]/.test(self.getChar(7))) {
+                    self.state = STATE_SCRIPT_TAG;
+                    self.append("<script");
+                    self.index += 6;
                 }
-                else if ('$' == char && '{' == charAt(text, index+1)) {
-                    state = STATE_OUTPUT;
-                    pushCode("'+(");
-                    index++;
+                else if ('$' === char && '{' === self.getChar(1)) {
+                    self.state = STATE_OUTPUT;
+                    self.append("'+(");
+                    self.index++;
                 }
-                else if ("\r" == char) {
-                    pushCode("\\r");
+                else if ("\r" === char) {
+                    self.append("\\r");
                 }
-                else if ("\n" == char) {
-                    pushCode("\\n");
+                else if ("\n" === char) {
+                    self.append("\\n");
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             case STATE_CODE:
-                if (CHAR_SINGLE_QUTO == char) {
-                    state = STATE_CODE_SINGLE_QUTO;
-                    pushCode(char);
+                if (CHAR_SINGLE_QUTO === char) {
+                    self.state = STATE_CODE_SINGLE_QUTO;
+                    self.append(char);
                 }
-                else if (CHAR_DOUBLE_QUTO == char) {
-                    state = STATE_CODE_DOUBLE_QUTO;
-                    pushCode(char);
+                else if (CHAR_DOUBLE_QUTO === char) {
+                    self.state = STATE_CODE_DOUBLE_QUTO;
+                    self.append(char);
                 }
-                else if ('%' == char && CHAR_GT == charAt(text, index+1)) {
-                    state = STATE_HTML;
-                    pushCode(`;${_var}+='`);
-                    index++;
+                else if ('%' === char && CHAR_GT === self.getChar(1)) {
+                    self.state = STATE_HTML;
+                    self.append(code);
+                    self.index++;
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             // 代码中的单引号
             case STATE_CODE_SINGLE_QUTO:
-                if (CHAR_ESCAPE == char) {
-                    pushCode(char);
-                    pushCode(charAt(text, ++index));
+                if (CHAR_ESCAPE === char) {
+                    self.append(char + self.getChar(1));
+                    self.index++;
                 }
-                else if (CHAR_SINGLE_QUTO == char) {
-                    state = STATE_CODE;
-                    pushCode(char);
+                else if (CHAR_SINGLE_QUTO === char) {
+                    self.state = STATE_CODE;
+                    self.append(char);
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             // 代码中的双引号
             case STATE_CODE_DOUBLE_QUTO:
-                if (CHAR_ESCAPE == char) {
-                    pushCode(char);
-                    pushCode(charAt(text, ++index));
+                if (CHAR_ESCAPE === char) {
+                    self.append(char + self.getChar(1));
+                    self.index++;
                 }
-                else if (CHAR_DOUBLE_QUTO == char) {
-                    state = STATE_CODE;
-                    pushCode(char);
+                else if (CHAR_DOUBLE_QUTO === char) {
+                    self.state = STATE_CODE;
+                    self.append(char);
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             case STATE_OUTPUT:
-                if (CHAR_SINGLE_QUTO == char) {
-                    state = STATE_OUTPUT_SINGLE_QUTO;
-                    pushCode(char);
+                if (CHAR_SINGLE_QUTO === char) {
+                    self.state = STATE_OUTPUT_SINGLE_QUTO;
+                    self.append(char);
                 }
-                else if (CHAR_DOUBLE_QUTO == char) {
-                    state = STATE_OUTPUT_DOUBLE_QUTO;
-                    pushCode(char);
+                else if (CHAR_DOUBLE_QUTO === char) {
+                    self.state = STATE_OUTPUT_DOUBLE_QUTO;
+                    self.append(char);
                 }
-                else if ('}' == char) {
-                    state = STATE_HTML;
-                    pushCode(")+'");
+                else if ('}' === char) {
+                    self.state = STATE_HTML;
+                    self.append(")+'");
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             // 代码中的单引号
             case STATE_OUTPUT_SINGLE_QUTO:
-                if (CHAR_ESCAPE == char) {
-                    pushCode(char);
-                    pushCode(charAt(text, ++index));
+                if (CHAR_ESCAPE === char) {
+                    self.append(char + charAt(self.text, ++self.index));
                 }
-                else if (CHAR_SINGLE_QUTO == char) {
-                    state = STATE_OUTPUT;
-                    pushCode(char);
+                else if (CHAR_SINGLE_QUTO === char) {
+                    self.state = STATE_OUTPUT;
+                    self.append(char);
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             // 代码中的双引号
             case STATE_OUTPUT_DOUBLE_QUTO:
-                if (CHAR_ESCAPE == char) {
-                    pushCode(char);
-                    pushCode(charAt(text, ++index));
+                if (CHAR_ESCAPE === char) {
+                    self.append(char + self.getChar(1));
+                    self.index++;
                 }
-                else if (CHAR_DOUBLE_QUTO == char) {
-                    state = STATE_OUTPUT;
-                    pushCode(char);
+                else if (CHAR_DOUBLE_QUTO === char) {
+                    self.state = STATE_OUTPUT;
+                    self.append(char);
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             // Script 代码
             case STATE_SCRIPT_TAG:
-                if (CHAR_SINGLE_QUTO == char) {
-                    state = STATE_SCRIPT_SINGLE_QUTO;
-                    pushCode(char);
+                if (CHAR_SINGLE_QUTO === char) {
+                    self.state = STATE_SCRIPT_SINGLE_QUTO;
+                    self.append(char);
                 }
-                else if (CHAR_DOUBLE_QUTO == char) {
-                    state = STATE_SCRIPT_DOUBLE_QUTO;
-                    pushCode(char);
+                else if (CHAR_DOUBLE_QUTO === char) {
+                    self.state = STATE_SCRIPT_DOUBLE_QUTO;
+                    self.append(char);
                 }
-                else if (CHAR_GT == char) {
-                    state = STATE_SCRIPT_CODE;
-                    pushCode(char);
+                else if (CHAR_GT === char) {
+                    self.state = STATE_SCRIPT_CODE;
+                    self.append(char);
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             case STATE_SCRIPT_CODE:
-                if ('<' == char &&
-                    '/' == charAt(text, index+1) &&
-                    's' == toLowerCase(charAt(text, index+2)) &&
-                    'c' == toLowerCase(charAt(text, index+3)) &&
-                    'r' == toLowerCase(charAt(text, index+4)) &&
-                    'i' == toLowerCase(charAt(text, index+5)) &&
-                    'p' == toLowerCase(charAt(text, index+6)) &&
-                    't' == toLowerCase(charAt(text, index+7)) &&
-                    '>' == charAt(text, index+8) ) {
-                    state = STATE_HTML;
-                    pushCode('</script>');
-                    index += 8;
+                if ('<' === char &&
+                    '/' === self.getChar(1) &&
+                    's' === toLowerCase(self.getChar(2)) &&
+                    'c' === toLowerCase(self.getChar(3)) &&
+                    'r' === toLowerCase(self.getChar(4)) &&
+                    'i' === toLowerCase(self.getChar(5)) &&
+                    'p' === toLowerCase(self.getChar(6)) &&
+                    't' === toLowerCase(self.getChar(7)) &&
+                    '>' === self.getChar(8) ) {
+                    self.state = STATE_HTML;
+                    self.append('</script>');
+                    self.index += 8;
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             case STATE_SCRIPT_SINGLE_QUTO:
-                if (CHAR_ESCAPE == char) {
-                    pushCode(char);
-                    pushCode(charAt(text, ++index));
+                if (CHAR_ESCAPE === char) {
+                    self.append(char + self.getChar(1));
+                    self.index++
                 }
-                else if (CHAR_SINGLE_QUTO == char) {
-                    state = STATE_SCRIPT_CODE;
-                    pushCode(char);
+                else if (CHAR_SINGLE_QUTO === char) {
+                    self.state = STATE_SCRIPT_CODE;
+                    self.append(char);
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
 
             case STATE_SCRIPT_DOUBLE_QUTO:
-                if (CHAR_ESCAPE == char) {
-                    pushCode(char);
-                    pushCode(charAt(text, ++index));
+                if (CHAR_ESCAPE === char) {
+                    self.append(char + self.getChar(1));
+                    self.index++;
                 }
-                else if (CHAR_DOUBLE_QUTO == char) {
-                    state = STATE_SCRIPT_CODE;
-                    pushCode(char);
+                else if (CHAR_DOUBLE_QUTO === char) {
+                    self.state = STATE_SCRIPT_CODE;
+                    self.append(char);
                 }
                 else {
-                    pushCode(char);
+                    self.append(char);
                 }
                 break;
         }
 
-        index++;
+        self.index++;
     }
 }
 
+module.exports = Compiler;
+
+function toLowerCase (string) {
+    return string.toLowerCase();
+}

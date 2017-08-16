@@ -1,15 +1,16 @@
-var snabbdom = require('snabbdom');
-var patch = snabbdom.init([ // Init patch function with chosen modules
-    require('snabbdom/modules/props').default,
-    require('snabbdom/modules/attributes').default, // for setting properties on DOM elements
-    require('snabbdom/modules/eventlisteners').default // attaches event listeners
+const patch = require('snabbdom').init([ // Init patch function with chosen modules
+    require('snabbdom/modules/class').default, // makes it easy to toggle classes
+    require('snabbdom/modules/props').default, // for setting properties on DOM elements
+    //require('snabbdom/modules/style').default, // handles styling on elements with support for animations
+    require('snabbdom/modules/eventlisteners').default, // attaches event listeners
 ]);
-var h = require('snabbdom/h').default; // helper function for creating vnodes
+const h = require('snabbdom/h').default; // helper function for creating vnodes
 
-var Compiler = require('./compiler');
-var render = require('./render');
-var Observer = require('./observer');
-var parser = require('./parser');
+require('raf'); // requestAnimationFrame
+
+const Template = require('./template');
+const Observer = require('./observer');
+const parser = require('./parser');
 
 /**
  * From Babel
@@ -25,16 +26,17 @@ function __classCallCheck(instance, Constructor) {
     }
 }
 
+const HIDDEN = ['hidden', 'mozHidden', 'webkitHidden'];
+
 /**
  * document.hidden
  *
  * @returns {*}
  */
 function documentHidden() {
-    var props = ['hidden', 'mozHidden', 'webkitHidden'];
-    for (var i = 0, length = props.length; i < length; i++) {
-        if (props[i] in document) {
-            return document[props[i]];
+    for (let hidden of HIDDEN) {
+        if (hidden in document) {
+            return document[hidden];
         }
     }
     return false;
@@ -52,10 +54,12 @@ function removeEventListener(element, event, handler) {
     });
 }
 
+const EVENT_VISIBILITY_CHANGE = 'visibilitychange';
+
 window.WebScript = function (options) {
     __classCallCheck(this, WebScript);
 
-    var element;
+    let element;
 
     options = options || {};
     if ('root' in options) {
@@ -65,19 +69,31 @@ window.WebScript = function (options) {
         element = document.body.children[0];
     }
 
-    var template = element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>');
+    let template = new Template(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
 
-    var compiler = new Compiler(template);
+    let observer = new Observer(options.data || {});
 
-    var code = compiler.getCode();
+    let vnode;
 
-    var observer = new Observer(options.data || {});
+    let isOnVisibilityChange= false;
+    let frame = null;
 
-    var vnode;
-    var timer;
-    var visibilitychangeListener;
-
-    observer.attach(redraw);
+    observer.attach(function () {
+        // 如果页面被隐藏了，则减少重绘
+        if (documentHidden()) {
+            if (!isOnVisibilityChange) {
+                addEventListener(document, EVENT_VISIBILITY_CHANGE, function fn () {
+                    removeEventListener(document, EVENT_VISIBILITY_CHANGE, fn);
+                    isOnVisibilityChange = false;
+                    redraw();
+                });
+                isOnVisibilityChange = true;
+            }
+        }
+        else {
+            redraw();
+        }
+    });
 
     redraw();
 
@@ -89,41 +105,24 @@ window.WebScript = function (options) {
     };
 
     function redraw() {
-        var html = render(code, options.data);
-
-        var vnodeTemp = parser(html, options.data, h);
-
-        // 如果页面被隐藏了，则减少重绘
-        if (documentHidden()) {
-            if (!visibilitychangeListener) {
-                addEventListener(document, 'visibilitychange', function fn () {
-                    removeEventListener(document, 'visibilitychange', fn);
-                    visibilitychangeListener();
-                    visibilitychangeListener = null;
-                });
-            }
-
-            visibilitychangeListener = function () {
-                repatch(vnodeTemp);
-            };
-        }
-        else {
-            repatch(vnodeTemp);
-        }
-    }
-
-    /**
-     * @param newVnode
-     */
-    function repatch(newVnode) {
-         if (timer) {
-            cancelAnimationFrame(timer);
+        if (frame) {
+            return;
         }
 
-        timer = requestAnimationFrame(function() {
-            timer = null;
-            patch(vnode || element, newVnode);
-            vnode = newVnode;
+        frame = requestAnimationFrame(function () {
+            let data = observer.target;
+
+            let html = template.render(data);
+
+            let vnodeTemp = parser(html, data, h);
+
+             patch(vnode || element, vnodeTemp);
+
+            vnode = vnodeTemp;
+
+            vnodeTemp = null;
+
+            frame = null;
         });
     }
 };
