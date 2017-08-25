@@ -1,48 +1,90 @@
-var isFunction = require('./lib/isFunction');
-var isObject = require('./lib/isObject');
-var isArray = require('./lib/isArray');
+const EventEmitter = require('eventemitter3');
 
 const METHODS = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
+const EVENT_DATA_CHANGE = 'datachange';
 
-var isSupportProxy = !!(global || self).Proxy;
+const isSupportProxy = !!(global || self).Proxy;
 
 if (!isSupportProxy) {
     require('proxy-polyfill/proxy.min');
 }
 
-module.exports = function Observer(target) {
-    var subscribes = [];
+const utils = require('./utils');
 
-    target = proxyObject(target, {
-        set: function (target, prop, value) {
-            target[prop] = value;
-            notify(target, prop, value);
-            return true;
+const _private = require('./private');
+
+class Observer {
+    
+    constructor (data) {
+        let $this = this;
+        let _this = _private($this);
+
+        _this.emitter = new EventEmitter();
+
+        // Handler
+        let handler = {
+            set(target, property, value) {
+                target[property] = value;
+                notify.call(_this);
+                return true;
+            }
+        };
+
+        if (isSupportProxy) {
+            handler['deleteProperty'] = function (target, property) {
+                delete target[property];
+                notify.call(_this);
+                return true;
+            }
         }
-    });
 
-    return {
-        attach: attach,
-        detach: detach,
-        target: target
-    };
-
-    function attach (fn) {
-        if (isFunction(fn)) {
-            subscribes.push(fn);
-        }
+       this.target = proxy(data, handler);
     }
 
-    function detach (fn) {
-        // TODO
+    attach (handler) {
+        _private(this).emitter.on(EVENT_DATA_CHANGE, handler);
     }
 
-    function notify (event) {
-        for (let i=0; i < subscribes.length; i++) {
-            subscribes[i](event);
-        }
+    detach (handler) {
+        _private(this).emitter.removeListener(EVENT_DATA_CHANGE, handler);
     }
-};
+}
+
+/**
+ * @private
+ *
+ * @param target
+ * @param property
+ * @param value
+ */
+function notify (target, property, value) {
+    let _this = this;
+    if(!_this.timer) {
+        _this.timer = setTimeout(function () {
+            _this.timer = null;
+            _this.emitter.emit(EVENT_DATA_CHANGE, target, property, value);
+        }, 0);
+    }
+}
+
+module.exports = Observer;
+
+/**
+ *
+ * @param target
+ * @param handler
+ * @returns {*}
+ */
+function proxy (target, handler) {
+    if (utils.isArray(target)) {
+        target = proxyArray(target, handler);
+    }
+    else if (utils.isObject(target)) {
+        target = proxyObject(target, handler);
+    }
+
+    return target;
+}
 
 /**
  * @param obj
@@ -51,12 +93,7 @@ module.exports = function Observer(target) {
  */
 function proxyObject (obj, handler) {
     for(let prop in obj) {
-        if (isArray(obj[prop])) {
-            obj[prop] = proxyArray(obj[prop], handler);
-        }
-        else if (isObject(obj[prop])) {
-            obj[prop] = proxyObject(obj[prop], handler);
-        }
+        obj[prop] = proxy(obj[prop], handler);
     }
 
     return new Proxy(obj, handler);
@@ -69,7 +106,17 @@ function proxyObject (obj, handler) {
  * @returns {*}
  */
 function proxyArray (array, handler) {
+    array.forEach(function (value, index) {
+        if(utils.isObject(value)) {
+            array[index] = new Proxy(value, handler);
+        }
+    });
     if (isSupportProxy) {
+        array.forEach(function (value, index) {
+            if(utils.isObject(value)) {
+                array[index] = new Proxy(value, handler);
+            }
+        });
         return new Proxy(array, handler);
     }
     else {
@@ -83,5 +130,6 @@ function proxyArray (array, handler) {
                 }
             });
         });
+        return array;
     }
 }

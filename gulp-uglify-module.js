@@ -14,12 +14,12 @@ function uglifyModule () {
 
         let pattern = /require\(['"](.*?)['"]\)/g;
         let match;
-        let i = 0;
+        let i = 1;
 
         while (match = pattern.exec(content)) {
             let moduleName = match[1];
             if (!(moduleName in moduleNameMap)) {
-                moduleNameMap[moduleName] = getUglifyName(i++);
+                moduleNameMap[moduleName] = i++;
             }
         }
 

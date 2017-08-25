@@ -1,6 +1,6 @@
 # WebScript
 
-![version](https://img.shields.io/badge/version-0.3.0-green.svg)
+![version](https://img.shields.io/badge/version-0.4.0-green.svg)
 
 WebScript 是一个灵活、语义化的轻量级前端框架。
 
@@ -28,6 +28,8 @@ WebScript 是一个灵活、语义化的轻量级前端框架。
 ## 语法
 
 ### 变量输出
+
+变量输出的格式为 `${var}` 。（语法参考 ES6 模板字符串）
 
 样例
 
@@ -82,32 +84,34 @@ WebScript 是一个灵活、语义化的轻量级前端框架。
 
 ## 变量绑定
 
-变量绑定以 `:` 开头，后面接需要绑定的变量名，只支持表单元素的绑定。
+变量绑定以 `::` 开头，后面接需要绑定的变量名，只支持表单元素的绑定。(语法参考 ES7 函数绑定)
 
-### 输入框绑定（草案）
+### 输入框绑定
 
 ```html
-<input type="text" name=":name" value="Hello World">
+<input type="text" name="::name" value="Hello World">
 ```
 
-### 单选框绑定（草案）
+### 单选框绑定
 
 ```html
-<input type="radio" name=":type" value="1">
-<input type="radio" name=":type" value="2">
-<input type="radio" name=":type" value="3">
+<input type="radio" name="::type" value="1">
+<input type="radio" name="::type" value="2">
+<input type="radio" name="::type" value="3">
 ```
 
-### 复选框绑定（草案）
+### 复选框绑定
 
 ```html
-<input type="checkbox" name=":isopen">
+<input type="checkbox" name=":isOpen">
 ```
 
-## 事件（草案）
+## 事件
+
+事件以 `on-` 开头，后面接事件名称，如点击事件为 `on-click`
 
 ```html
-<button onclick=":show">Button</button>
+<button on-click="show">Button</button>
 ```
 
 ## 其他

@@ -1,15 +1,55 @@
 const assert = require('assert');
 
+delete global.Proxy;
+
 const Observer = require('../src/observer');
 
 describe('Observer', function () {
 
-    this.timeout(1);
+    this.timeout(300);
 
-    it('object', function (done) {
+    it('Modify property', function (done) {
+        let data = {
+            property: 1
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        observer.target.property = 2;
+    });
+
+    it('Set Property', function (done) {
+        let data = {
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        observer.target.property = 1;
+    });
+
+    it('Delete Property', function (done) {
+        let data = {
+            property: 1
+        };
+        let observer = new Observer(data);
+        observer.attach(function () {
+            assert.ok(true);
+            done();
+        });
+
+        delete observer.target.property;
+    });
+
+    it('Modify Object property', function (done) {
         let data = {
             object: {
-                prop1: 1
+                property: 1
             }
         };
         let observer = new Observer(data);
@@ -18,15 +58,12 @@ describe('Observer', function () {
             done();
         });
 
-        data.object = {
-            prop2: 2
-        };
+        observer.target.object.property = 2;
     });
 
-    it('object-set-property', function (done) {
+    it('Set Object property', function (done) {
         let data = {
             object: {
-                prop1: 1
             }
         };
         let observer = new Observer(data);
@@ -35,13 +72,12 @@ describe('Observer', function () {
             done();
         });
 
-        data.object.prop1 = 2;
+        observer.target.object.property = 1;
     });
 
-    it('object-add-property', function (done) {
+    it('Delete Object property', function (done) {
         let data = {
             object: {
-                prop1: 1
             }
         };
         let observer = new Observer(data);
@@ -50,47 +86,42 @@ describe('Observer', function () {
             done();
         });
 
-        data.object.prop2 = 2;
+        delete observer.target.object.property;
     });
 
-    it('object-delete-property', function (done) {
-        let data = {
-            object: {
-                prop1: 1
-            }
-        };
+    it('Modify Array item', function (done) {
+        let data = [1];
         let observer = new Observer(data);
         observer.attach(function () {
             assert.ok(true);
             done();
         });
 
-        delete data.object.prop1;
+        observer.target[0] = 2;
     });
 
-    it('array', function (done) {
-        let data = {
-            array: [1]
-        };
+    it('Array Push', function (done) {
+        let data = [];
         let observer = new Observer(data);
         observer.attach(function () {
             assert.ok(true);
             done();
         });
 
-        data.array = [2];
+        observer.target.push(1);
     });
 
-    it('array-push', function (done) {
-        let data = {
-            array: [1]
-        };
+    it('Modify Object Array Property', function (done) {
+        let data = [{
+            property: 1
+        }];
         let observer = new Observer(data);
         observer.attach(function () {
             assert.ok(true);
             done();
         });
 
-        data.array.push(2);
+        observer.target[0].property = 2;
     });
+
 });

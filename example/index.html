@@ -21,7 +21,7 @@
         <p>Random is Event</p>
         <% } %>
         <hr>
-        <button onclick=":show">Show</button>
+        <button on-click="show">Show</button>
         <hr>
         <ul>
             <%
@@ -30,28 +30,28 @@
             <li>${list[i]}</li>
             <% } %>
         </ul>
-        <button onclick=":pushItem">Push a item</button>
-        <button onclick=":shiftItem">Shift a item</button>
+        <button onclick="pushItem">Push a item</button>
+        <button onclick="shiftItem">Shift a item</button>
         <hr>
         <div>
-            <input type="text" name=":text">
+            <input type="text" name="::text">
             Text: ${text}
         </div>
         <div>
-            <textarea name=":longtext"></textarea>
+            <textarea name="::longtext"></textarea>
             LongText: ${longtext}
         </div>
         <div>
-            <input type="radio" name=":sex" value="boy"> Boy
-            <input type="radio" name=":sex" value="girl"> Girl
+            <input type="radio" name="::sex" value="boy"> Boy
+            <input type="radio" name="::sex" value="girl"> Girl
             Sex: ${sex}
         </div>
         <div>
-            <input type="checkbox" name=":open">
+            <input type="checkbox" name="::open">
             Open: ${open}
         </div>
         <div>
-            <select name=":city">
+            <select name="::city">
                 <option value="Beijing">Beijing</option>
                 <option value="New York">New York</option>
                 <option value="London">London</option>
@@ -62,7 +62,7 @@
             ${subobj.prop}
         </div>
     </div>
-    <script src="../dist/webscript.min.js"></script>
+    <script src="../dist/webscript.js"></script>
     <script>
         //(function () {
             var webscript = new WebScript({

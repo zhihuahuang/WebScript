@@ -1,8 +1,7 @@
 /************
  * Compiler *
  ************/
-
-require('core-js/fn/string/at');
+const _private = require('./private');
 
 const CHAR_LT = "<";
 const CHAR_GT = ">";
@@ -30,240 +29,218 @@ class Compiler {
     constructor(text) {
         const VAR_NAME = `_html_${Date.now()}`;
 
-        let self = this;
+        let _this = _private(this);
 
-        self.text = text;
-        self.state = STATE_HTML;
-        self.index = 0;
-        self.codeArray = [ `var ${VAR_NAME}='` ];
+        _this.text = text;
+        _this.state = STATE_HTML;
+        _this.index = 0;
+        _this.codeArray = [ `var ${VAR_NAME}='` ];
+        _this.code = `;${VAR_NAME}+='`;
 
-        while (self.index < self.text.length) {
-            self.transfer(`;${VAR_NAME}+='`);
+        while (_this.index < _this.text.length) {
+            transfer(_this);
         }
 
-        self.append(`';return ${VAR_NAME};`);
-    }
-
-    getChar(offset = 0) {
-        return this.text.at(this.index + offset);
+        _this.codeArray.push(`';return ${VAR_NAME};`);
     }
 
     getCode() {
-        return this.codeArray.join('');
+        return _private(this).codeArray.join('');
+    }
+}
+
+/**
+ * @private
+ *
+ * @param _this
+ * @param offset
+ *
+ * @returns {*}
+ */
+function getChar (_this, offset = 0) {
+    return _this.text.at(_this.index + offset);
+}
+
+/**
+ * @private
+ *
+ * @param _this
+ * @param code
+ */
+function transfer (_this) {
+    const char = getChar(_this);
+
+    let state = _this.state,
+        appendCode = char,
+        step = 1;
+
+    switch (state) {
+        case STATE_HTML:
+            if (equal(CHAR_LT, char) &&
+                equal('%', getChar(_this, 1))) {
+                state = STATE_CODE;
+                appendCode = "';";
+                step++;
+            }
+            else if ('<' === char &&
+                equal('s', toLowerCase(getChar(_this, 1))) &&
+                equal('c', toLowerCase(getChar(_this, 2))) &&
+                equal('r', toLowerCase(getChar(_this, 3))) &&
+                equal('i', toLowerCase(getChar(_this, 4))) &&
+                equal('p', toLowerCase(getChar(_this, 5))) &&
+                equal('t', toLowerCase(getChar(_this, 6))) &&
+                /[>\s]/.test(getChar(_this, 7))) {
+                state = STATE_SCRIPT_TAG;
+                appendCode = "<script";
+                step += 6;
+            }
+            else if (equal('$', char) &&
+                     equal('{', getChar(_this, 1))) {
+                state = STATE_OUTPUT;
+                appendCode = "'+(";
+                step++;
+            }
+            else if (equal("\r", char)) {
+                appendCode = "\\r";
+            }
+            else if (equal("\n", char)) {
+                appendCode = "\\n";
+            }
+            break;
+
+        case STATE_CODE:
+            if (equal(CHAR_SINGLE_QUTO, char)) {
+                state = STATE_CODE_SINGLE_QUTO;
+            }
+            else if (equal(CHAR_DOUBLE_QUTO, char)) {
+                state = STATE_CODE_DOUBLE_QUTO;
+            }
+            else if (equal('%', char) &&
+                     equal(CHAR_GT, getChar(_this, 1))) {
+                state = STATE_HTML;
+                step++;
+                appendCode = _this.code;
+            }
+            break;
+
+        // 代码中的单引号
+        case STATE_CODE_SINGLE_QUTO:
+            if (equal(CHAR_ESCAPE, char)) {
+                appendCode += getChar(_this, 1);
+                step++;
+            }
+            else if (equal(CHAR_SINGLE_QUTO, char)) {
+                state = STATE_CODE;
+            }
+            break;
+
+        // 代码中的双引号
+        case STATE_CODE_DOUBLE_QUTO:
+            if (equal(CHAR_ESCAPE, char)) {
+                appendCode += getChar(_this, 1);
+                step++;
+            }
+            else if (equal(CHAR_DOUBLE_QUTO, char)) {
+                state = STATE_CODE;
+            }
+            break;
+
+        case STATE_OUTPUT:
+            if (equal(CHAR_SINGLE_QUTO, char)) {
+                state = STATE_OUTPUT_SINGLE_QUTO;
+            }
+            else if (equal(CHAR_DOUBLE_QUTO, char)) {
+                state = STATE_OUTPUT_DOUBLE_QUTO;
+            }
+            else if (equal('}', char)) {
+                state = STATE_HTML;
+                appendCode = ")+'";
+            }
+            break;
+
+        // 代码中的单引号
+        case STATE_OUTPUT_SINGLE_QUTO:
+            if (equal(CHAR_ESCAPE, char)) {
+                appendCode += getChar(_this, 1);
+                step++;
+            }
+            else if (equal(CHAR_SINGLE_QUTO, char)) {
+                state = STATE_OUTPUT;
+            }
+            break;
+
+        // 代码中的双引号
+        case STATE_OUTPUT_DOUBLE_QUTO:
+            if (equal(CHAR_ESCAPE, char)) {
+                appendCode += getChar(_this, 1);
+                step++;
+            }
+            else if (equal(CHAR_DOUBLE_QUTO, char)) {
+                state = STATE_OUTPUT;
+            }
+            break;
+
+        // Script 代码
+        case STATE_SCRIPT_TAG:
+            if (CHAR_SINGLE_QUTO === char) {
+                state = STATE_SCRIPT_SINGLE_QUTO;
+            }
+            else if (CHAR_DOUBLE_QUTO === char) {
+                state = STATE_SCRIPT_DOUBLE_QUTO;
+            }
+            else if (CHAR_GT === char) {
+                state = STATE_SCRIPT_CODE;
+            }
+            break;
+
+        case STATE_SCRIPT_CODE:
+            if (equal('<', char) &&
+                equal('/', getChar(_this, 1)) &&
+                equal('s', toLowerCase(getChar(_this, 2))) &&
+                equal('c', toLowerCase(getChar(_this, 3))) &&
+                equal('r', toLowerCase(getChar(_this, 4))) &&
+                equal('i', toLowerCase(getChar(_this, 5))) &&
+                equal('p', toLowerCase(getChar(_this, 6))) &&
+                equal('t', toLowerCase(getChar(_this, 7))) &&
+                equal('>', getChar(_this, 8))) {
+                state = STATE_HTML;
+                appendCode = '</script>';
+                step += 8;
+            }
+            break;
+
+        case STATE_SCRIPT_SINGLE_QUTO:
+            if (equal(CHAR_ESCAPE, char)) {
+                appendCode += getChar(_this, 1);
+                step++
+            }
+            else if (equal(CHAR_SINGLE_QUTO, char)) {
+                state = STATE_SCRIPT_CODE;
+            }
+            break;
+
+        case STATE_SCRIPT_DOUBLE_QUTO:
+            if (equal(CHAR_ESCAPE, char)) {
+                appendCode += getChar(_this, 1);
+                step++;
+            }
+            else if (equal(CHAR_DOUBLE_QUTO, char)) {
+                state = STATE_SCRIPT_CODE;
+            }
+            break;
     }
 
-    append(code) {
-        this.codeArray.push(code);
-    }
-
-    transfer(code) {
-        let self = this;
-        let char = self.getChar();
-
-        switch (self.state) {
-            case STATE_HTML:
-                if (CHAR_LT === char && '%' === self.getChar(1)) {
-                    self.state = STATE_CODE;
-                    self.append("';");
-                    self.index++;
-                }
-                else if ('<' === char &&
-                    's' === toLowerCase(self.getChar(1)) &&
-                    'c' === toLowerCase(self.getChar(2)) &&
-                    'r' === toLowerCase(self.getChar(3)) &&
-                    'i' === toLowerCase(self.getChar(4)) &&
-                    'p' === toLowerCase(self.getChar(5)) &&
-                    't' === toLowerCase(self.getChar(6)) &&
-                    /[>\s]/.test(self.getChar(7))) {
-                    self.state = STATE_SCRIPT_TAG;
-                    self.append("<script");
-                    self.index += 6;
-                }
-                else if ('$' === char && '{' === self.getChar(1)) {
-                    self.state = STATE_OUTPUT;
-                    self.append("'+(");
-                    self.index++;
-                }
-                else if ("\r" === char) {
-                    self.append("\\r");
-                }
-                else if ("\n" === char) {
-                    self.append("\\n");
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            case STATE_CODE:
-                if (CHAR_SINGLE_QUTO === char) {
-                    self.state = STATE_CODE_SINGLE_QUTO;
-                    self.append(char);
-                }
-                else if (CHAR_DOUBLE_QUTO === char) {
-                    self.state = STATE_CODE_DOUBLE_QUTO;
-                    self.append(char);
-                }
-                else if ('%' === char && CHAR_GT === self.getChar(1)) {
-                    self.state = STATE_HTML;
-                    self.append(code);
-                    self.index++;
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            // 代码中的单引号
-            case STATE_CODE_SINGLE_QUTO:
-                if (CHAR_ESCAPE === char) {
-                    self.append(char + self.getChar(1));
-                    self.index++;
-                }
-                else if (CHAR_SINGLE_QUTO === char) {
-                    self.state = STATE_CODE;
-                    self.append(char);
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            // 代码中的双引号
-            case STATE_CODE_DOUBLE_QUTO:
-                if (CHAR_ESCAPE === char) {
-                    self.append(char + self.getChar(1));
-                    self.index++;
-                }
-                else if (CHAR_DOUBLE_QUTO === char) {
-                    self.state = STATE_CODE;
-                    self.append(char);
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            case STATE_OUTPUT:
-                if (CHAR_SINGLE_QUTO === char) {
-                    self.state = STATE_OUTPUT_SINGLE_QUTO;
-                    self.append(char);
-                }
-                else if (CHAR_DOUBLE_QUTO === char) {
-                    self.state = STATE_OUTPUT_DOUBLE_QUTO;
-                    self.append(char);
-                }
-                else if ('}' === char) {
-                    self.state = STATE_HTML;
-                    self.append(")+'");
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            // 代码中的单引号
-            case STATE_OUTPUT_SINGLE_QUTO:
-                if (CHAR_ESCAPE === char) {
-                    self.append(char + charAt(self.text, ++self.index));
-                }
-                else if (CHAR_SINGLE_QUTO === char) {
-                    self.state = STATE_OUTPUT;
-                    self.append(char);
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            // 代码中的双引号
-            case STATE_OUTPUT_DOUBLE_QUTO:
-                if (CHAR_ESCAPE === char) {
-                    self.append(char + self.getChar(1));
-                    self.index++;
-                }
-                else if (CHAR_DOUBLE_QUTO === char) {
-                    self.state = STATE_OUTPUT;
-                    self.append(char);
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            // Script 代码
-            case STATE_SCRIPT_TAG:
-                if (CHAR_SINGLE_QUTO === char) {
-                    self.state = STATE_SCRIPT_SINGLE_QUTO;
-                    self.append(char);
-                }
-                else if (CHAR_DOUBLE_QUTO === char) {
-                    self.state = STATE_SCRIPT_DOUBLE_QUTO;
-                    self.append(char);
-                }
-                else if (CHAR_GT === char) {
-                    self.state = STATE_SCRIPT_CODE;
-                    self.append(char);
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            case STATE_SCRIPT_CODE:
-                if ('<' === char &&
-                    '/' === self.getChar(1) &&
-                    's' === toLowerCase(self.getChar(2)) &&
-                    'c' === toLowerCase(self.getChar(3)) &&
-                    'r' === toLowerCase(self.getChar(4)) &&
-                    'i' === toLowerCase(self.getChar(5)) &&
-                    'p' === toLowerCase(self.getChar(6)) &&
-                    't' === toLowerCase(self.getChar(7)) &&
-                    '>' === self.getChar(8) ) {
-                    self.state = STATE_HTML;
-                    self.append('</script>');
-                    self.index += 8;
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            case STATE_SCRIPT_SINGLE_QUTO:
-                if (CHAR_ESCAPE === char) {
-                    self.append(char + self.getChar(1));
-                    self.index++
-                }
-                else if (CHAR_SINGLE_QUTO === char) {
-                    self.state = STATE_SCRIPT_CODE;
-                    self.append(char);
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-
-            case STATE_SCRIPT_DOUBLE_QUTO:
-                if (CHAR_ESCAPE === char) {
-                    self.append(char + self.getChar(1));
-                    self.index++;
-                }
-                else if (CHAR_DOUBLE_QUTO === char) {
-                    self.state = STATE_SCRIPT_CODE;
-                    self.append(char);
-                }
-                else {
-                    self.append(char);
-                }
-                break;
-        }
-
-        self.index++;
-    }
+    _this.state = state;
+    _this.index += step;
+    _this.codeArray.push(appendCode);
 }
 
 module.exports = Compiler;
 
 function toLowerCase (string) {
     return string.toLowerCase();
+}
+
+function equal (left, right) {
+    return left === right;
 }

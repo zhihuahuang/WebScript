@@ -1,12 +1,59 @@
-var domParser = new DOMParser();
+/*
+ * DOMParser HTML extension
+ * 2012-09-04
+ *
+ * By Eli Grey, http://eligrey.com
+ * Public domain.
+ * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+ */
+
+/*! @source https://gist.github.com/1129031 */
+/*global document, DOMParser*/
+
+(function(DOMParser) {
+    "use strict";
+
+    var
+        proto = DOMParser.prototype
+        , nativeParse = proto.parseFromString
+    ;
+
+    // Firefox/Opera/IE throw errors on unsupported types
+    try {
+        // WebKit returns null on unsupported types
+        if ((new DOMParser()).parseFromString("", "text/html")) {
+            // text/html parsing is natively supported
+            return;
+        }
+    } catch (ex) {}
+
+    proto.parseFromString = function(markup, type) {
+        if (/^\s*text\/html\s*(?:;|$)/i.test(type)) {
+            var
+                doc = document.implementation.createHTMLDocument("")
+            ;
+            if (markup.toLowerCase().indexOf('<!doctype') > -1) {
+                doc.documentElement.innerHTML = markup;
+            }
+            else {
+                doc.body.innerHTML = markup;
+            }
+            return doc;
+        } else {
+            return nativeParse.apply(this, arguments);
+        }
+    };
+}(DOMParser));
+
+let domParser = new DOMParser();
 
 function parseFromString(string) {
-    var doc = domParser.parseFromString(string, 'text/html');
+    let doc = domParser.parseFromString(string, 'text/html');
     return doc.body.firstChild;
 }
 
 function parseDOM (dom, data, h) {
-    var tagName = dom.tagName,
+    let tagName = dom.tagName,
         selector = tagName,
         hData = {
             attrs: {},
@@ -23,15 +70,15 @@ function parseDOM (dom, data, h) {
     }
 
     // 解析属性
-    var attributes = dom.attributes;
+    let attributes = dom.attributes;
 
-    var i,
+    let i,
         length;
 
     for(i = 0, length = attributes.length; i < length; i++) {
         (function (name, value) {
-            var eventMatch = /^on(.*)/.exec(name);
-            var bindMatch = /^:(.*)/.exec(value);
+            let eventMatch = /^on-([a-z].*)/i.exec(name);
+            let bindMatch = /^::(.*)/.exec(value);
             // Var Bind
             if (name == "name" && bindMatch && (tagName == "INPUT" || tagName == "TEXTAREA" || tagName == "SELECT")) {
                 value = bindMatch[1];
@@ -55,8 +102,8 @@ function parseDOM (dom, data, h) {
                     }
                 }
             }
-            else if (bindMatch && eventMatch) {
-                hData.on[eventMatch[1]] = getObject(data, bindMatch[1]);
+            else if (eventMatch) {
+                hData.on[eventMatch[1]] = getObject(data, value);
             }
             else if (name != 'id' && name != 'class') {
                 hData.attrs[parseName(name)] = value;
@@ -65,7 +112,7 @@ function parseDOM (dom, data, h) {
     }
 
     for(i = 0, length = dom.childNodes.length; i < length; i++){
-        var child = dom.childNodes[i];
+        let child = dom.childNodes[i];
         if (child.nodeType == Node.TEXT_NODE) {
             children.push(child.textContent);
         }
@@ -84,7 +131,7 @@ function parseName (name) {
 }
 
 function parseProp(prop) {
-    var propList = [];
+    let propList = [];
     if (prop.charAt(0) != '[') {
         propList = prop.split('.');
     }
@@ -96,9 +143,9 @@ function parseProp(prop) {
 }
 
 function getObject (object, prop, defaultValue) {
-    var propList = parseProp(prop);
+    let propList = parseProp(prop);
 
-    for(var i = 0, length = propList.length; i < length; i++) {
+    for(let i = 0, length = propList.length; i < length; i++) {
         if (propList[i] in object) {
             object = object[propList[i]];
         }
@@ -110,9 +157,9 @@ function getObject (object, prop, defaultValue) {
 }
 
 function setObject (object, prop, value) {
-    var propList = parseProp(prop);
+    let propList = parseProp(prop);
 
-    for(var i = 0, length = propList.length; i < length; i++) {
+    for(let i = 0, length = propList.length; i < length; i++) {
         if (i == length-1) {
             object[propList[i]] = value;
         }
@@ -123,6 +170,6 @@ function setObject (object, prop, value) {
 }
 
 module.exports = function (html, data, h) {
-    var dom = parseFromString(html);
+    let dom = parseFromString(html);
     return parseDOM(dom, data, h);
 };
