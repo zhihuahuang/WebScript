@@ -25,14 +25,4 @@ gulp.task('main', function () {
     .pipe(gulp.dest(__dirname + '/dist'));
 });
 
-gulp.task('polyfill', function () {
-    browserify([__dirname + '/src/polyfill.js'])
-    .bundle()
-    .pipe(source('webscript-polyfill.js'))
-    //.pipe(buffer())
-    //.pipe(uglifyModule())
-    //.pipe(uglify())
-    .pipe(gulp.dest(__dirname + '/dist'));
-});
-
-gulp.task('default', ['main', 'polyfill']);
+gulp.task('default', ['main']);

@@ -1,14 +1,12 @@
 # WebScript
 
-![version](https://img.shields.io/badge/version-0.4.1-green.svg)
+![version](https://img.shields.io/badge/version-0.4.0-green.svg)
 
-WebScript is a lightweight and semantic mvvm framework.
+WebScript 是一个灵活、语义化的轻量级前端框架。
 
-It is very close to native JS syntax, so you can get started quickly. It use virtual dom, and it only has 20kb+(not gzip).
+*目前仍处于开发阶段，语法等有可能会发生改变。*
 
-[中文文档](./README.zhCN.md)
-
-## Simple Example
+## 样例
 
 ```html
 <body>
@@ -27,26 +25,26 @@ It is very close to native JS syntax, so you can get started quickly. It use vir
 </body>
 ```
 
-## Syntax
+## 语法
 
-### Template
+### 变量输出
 
 变量输出的格式为 `${var}` 。（语法参考 ES6 模板字符串）
 
-example
+样例
 
 ```html
 <% var text = 'Hello World'; %>
 <p>${text}</p>
 ```
 
-output
+结果
 
 ```html
 <p>Hello World</p>
 ```
 
-### Condition
+### 条件判断
 
 #### if...else
 
@@ -64,7 +62,7 @@ output
 <p>${ (Date.now() % 2 === 0) ? 'Odd' : 'Even' }</p>
 ```
 
-### Iteration
+### 循环
 
 #### while
 
@@ -84,17 +82,17 @@ output
 </ul>
 ```
 
-## Bindings
+## 变量绑定
 
 变量绑定以 `::` 开头，后面接需要绑定的变量名，只支持表单元素的绑定。(语法参考 ES7 函数绑定)
 
-### Inputbox bindings
+### 输入框绑定
 
 ```html
 <input type="text" name="::name" value="Hello World">
 ```
 
-### Radio bindings
+### 单选框绑定
 
 ```html
 <input type="radio" name="::type" value="1">
@@ -102,13 +100,13 @@ output
 <input type="radio" name="::type" value="3">
 ```
 
-### Checkbox bindings
+### 复选框绑定
 
 ```html
 <input type="checkbox" name=":isOpen">
 ```
 
-## Event
+## 事件
 
 事件以 `on-` 开头，后面接事件名称，如点击事件为 `on-click`
 
@@ -116,6 +114,6 @@ output
 <button on-click="show">Button</button>
 ```
 
-## Other
+## 其他
 
 作为一个

@@ -4,9 +4,10 @@ const patch = require('snabbdom').init([
     require('snabbdom/modules/attributes').default,
     require('snabbdom/modules/eventlisteners').default,
 ]);
-const h = require('snabbdom/h').default;
 
 const EventEmitter = require('eventemitter3');
+
+require('./polyfill');
 
 const Template = require('./template');
 const Observer = require('./observer');
@@ -29,18 +30,6 @@ function documentHidden() {
     return false;
 }
 
-function addEventListener(element, event, handler) {
-    event.trim().split(/\s+/).forEach(function (name) {
-        element.addEventListener(name, handler);
-    });
-}
-
-function removeEventListener(element, event, handler) {
-    event.trim().split(/\s+/).forEach(function (name) {
-        element.removeEventListener(name, handler);
-    });
-}
-
 const EVENT_VISIBILITY_CHANGE = 'visibilitychange';
 
 class WebScript {
@@ -57,6 +46,12 @@ class WebScript {
             element = document.body.children[0];
         }
 
+        _this.classes = options.classes || {};
+        _this.style = options.style || {};
+        _this.attrs = options.attrs || {};
+        _this.props = options.props || {};
+        _this.on = options.on || {};
+
         _this.isOnVisibilityChange = false;
 
         _this.template = new Template(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
@@ -66,11 +61,12 @@ class WebScript {
             // 如果页面被隐藏了，则减少重绘
             if (documentHidden()) {
                 if (!_this.isOnVisibilityChange) {
-                    addEventListener(document, EVENT_VISIBILITY_CHANGE, function fn () {
-                        removeEventListener(document, EVENT_VISIBILITY_CHANGE, fn);
+                    document.addEventListener(EVENT_VISIBILITY_CHANGE, function handler() {
+                        document.removeEventListener(EVENT_VISIBILITY_CHANGE, handler);
                         _this.isOnVisibilityChange = false;
                         $this.render();
                     });
+
                     _this.isOnVisibilityChange = true;
                 }
             }
@@ -80,6 +76,8 @@ class WebScript {
         });
 
         $this.render();
+
+        _this.emitter = new EventEmitter;
 
         $this.element = element;
         $this.data = observer.target;
@@ -98,7 +96,7 @@ class WebScript {
 
             let html = _this.template.render(data);
 
-            let vnodeTemp = parser(html, data, h);
+            let vnodeTemp = parser.call($this, html);
 
             patch(_this.vnode || $this.element, vnodeTemp);
 
@@ -108,6 +106,15 @@ class WebScript {
 
             _this.frame = null;
         });
+    }
+
+    on(event, listener) {
+        _private(this).emitter.addListener(event, listener);
+        return this;
+    }
+
+    off(event, listener) {
+        _private(this).emitter.removeListener(event, listener);
     }
 }
 

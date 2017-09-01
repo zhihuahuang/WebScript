@@ -30,8 +30,8 @@
             <li>${list[i]}</li>
             <% } %>
         </ul>
-        <button onclick="pushItem">Push a item</button>
-        <button onclick="shiftItem">Shift a item</button>
+        <button on-click="pushItem">Push a item</button>
+        <button on-click="shiftItem">Shift a item</button>
         <hr>
         <div>
             <input type="text" name="::text">
@@ -49,6 +49,7 @@
         <div>
             <input type="checkbox" name="::open">
             Open: ${open}
+            <div class="open-view">Open!</div>
         </div>
         <div>
             <select name="::city">
@@ -62,6 +63,7 @@
             ${subobj.prop}
         </div>
     </div>
+
     <script src="../dist/webscript.js"></script>
     <script>
         //(function () {
@@ -74,6 +76,7 @@
                     open: true,
                     city: 'unknow',
                     show: function () {
+                        console.log(this);
                         alert('You click a button~');
                     },
                     list: ['item1', 'item2', 'item3'],
@@ -87,14 +90,22 @@
                     subobj: {
                         prop: 1
                     }
+                },
+                attrs: {
+                    '.open-view': {
+                        hidden: function () {
+                            console.log(!this.data.open);
+                            return !this.data.open;
+                        }
+                    }
                 }
             });
 
             var data = webscript.data;
 
-           setInterval(function () {
-               data.time = Date.now();
-           }, 1000);
+//           setInterval(function () {
+//               data.time = Date.now();
+//           }, 1000);
 
             var options = {
                 data: data

@@ -1,49 +1,7 @@
-/*
- * DOMParser HTML extension
- * 2012-09-04
- *
- * By Eli Grey, http://eligrey.com
- * Public domain.
- * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
- */
+const h = require('snabbdom/h').default;
 
-/*! @source https://gist.github.com/1129031 */
-/*global document, DOMParser*/
-
-(function(DOMParser) {
-    "use strict";
-
-    var
-        proto = DOMParser.prototype
-        , nativeParse = proto.parseFromString
-    ;
-
-    // Firefox/Opera/IE throw errors on unsupported types
-    try {
-        // WebKit returns null on unsupported types
-        if ((new DOMParser()).parseFromString("", "text/html")) {
-            // text/html parsing is natively supported
-            return;
-        }
-    } catch (ex) {}
-
-    proto.parseFromString = function(markup, type) {
-        if (/^\s*text\/html\s*(?:;|$)/i.test(type)) {
-            var
-                doc = document.implementation.createHTMLDocument("")
-            ;
-            if (markup.toLowerCase().indexOf('<!doctype') > -1) {
-                doc.documentElement.innerHTML = markup;
-            }
-            else {
-                doc.body.innerHTML = markup;
-            }
-            return doc;
-        } else {
-            return nativeParse.apply(this, arguments);
-        }
-    };
-}(DOMParser));
+const _ = require('./utils');
+const _private = require('./private');
 
 let domParser = new DOMParser();
 
@@ -52,7 +10,9 @@ function parseFromString(string) {
     return doc.body.firstChild;
 }
 
-function parseDOM (dom, data, h) {
+function parseDOM (dom) {
+    let $this = this;
+
     let tagName = dom.tagName,
         selector = tagName,
         hData = {
@@ -84,29 +44,29 @@ function parseDOM (dom, data, h) {
                 value = bindMatch[1];
                 if (dom.type == 'radio') {
                     hData.attrs.name = value;
-                    hData.props.checked = (dom.value == getObject(data, value));
+                    hData.props.checked = (dom.value == _.getObject($this.data, value));
                     hData.on.change = function (event) {
-                        setObject(data, value, event.target.value);
+                        _.setObject($this.data, value, event.target.value);
                     }
                 }
                 else if (dom.type == 'checkbox') {
-                    hData.props.checked = getObject(data, value);
+                    hData.props.checked = _.getObject($this.data, value);
                     hData.on.change = function (event) {
-                        setObject(data, value, event.target.checked);
+                        _.setObject($this.data, value, event.target.checked);
                     }
                 }
                 else {
-                    hData.props.value = getObject(data, value);
+                    hData.props.value = _.getObject($this.data, value);
                     hData.on.input = hData.on.change = function (event) {
-                        setObject(data, value, event.target.value);
+                        _.setObject($this.data, value, event.target.value);
                     }
                 }
             }
             else if (eventMatch) {
-                hData.on[eventMatch[1]] = getObject(data, value);
+                hData.on[eventMatch[1]] = _.getObject($this.data, value, function () {}).bind($this);
             }
             else if (name != 'id' && name != 'class') {
-                hData.attrs[parseName(name)] = value;
+                hData.attrs[_.toCamelCase(name)] = value;
             }
         }(attributes[i].name, attributes[i].value));
     }
@@ -117,59 +77,60 @@ function parseDOM (dom, data, h) {
             children.push(child.textContent);
         }
         else {
-            children.push(parseDOM(child, data, h));
+            children.push(parseDOM.call(this, child));
         }
     }
 
     return h(selector, hData, children);
 }
 
-function parseName (name) {
-    return name.replace(/-([a-z])/ig, function ($0, $1) {
-        return $1.toUpperCase();
-    });
-}
-
-function parseProp(prop) {
-    let propList = [];
-    if (prop.charAt(0) != '[') {
-        propList = prop.split('.');
-    }
-    else {
-        propList = prop.replace(/^\[[\'\"]?|[\'\"]?$/g, '').split(/[\'\"]?\]\[[\'\"]?/); // ['a'][0]
-    }
-
-    return propList;
-}
-
-function getObject (object, prop, defaultValue) {
-    let propList = parseProp(prop);
-
-    for(let i = 0, length = propList.length; i < length; i++) {
-        if (propList[i] in object) {
-            object = object[propList[i]];
-        }
-        else {
-            return defaultValue;
-        }
-    }
-    return object;
-}
-
-function setObject (object, prop, value) {
-    let propList = parseProp(prop);
-
-    for(let i = 0, length = propList.length; i < length; i++) {
-        if (i == length-1) {
-            object[propList[i]] = value;
-        }
-        else {
-            object = object[propList[i]];
-        }
-    }
-}
-
-module.exports = function (html, data, h) {
+module.exports = function (html) {
     let dom = parseFromString(html);
-    return parseDOM(dom, data, h);
+    console.log(this);
+
+    /* Class */
+    parseSelector.apply(this, [dom, _private(this).classes, function (element, name, value) {
+        if (value) {
+            element.classList.add(name);
+        }
+    }]);
+
+    /* Style */
+    parseSelector.apply(this, [dom, _private(this).style, function (element, name, value) {
+        element.style[name] = value;
+    }]);
+
+    /* Attr */
+    parseSelector.apply(this, [dom, _private(this).attrs, function (element, name, value) {
+        if (value || !/^hidden|disabled$/i.test(name)) {
+            element.setAttribute(name, value);
+        }
+    }]);
+
+    /* Prop */
+    parseSelector.apply(this, [dom, _private(this).props, function (element, name, value) {
+        element[name] = value;
+    }]);
+
+    return parseDOM.call(this, dom);
 };
+
+function parseSelector (dom, selectores, handler) {
+    for (let selector in selectores) {
+        let elementList = dom.querySelectorAll(selector);
+
+        if (elementList.length > 0) {
+            for (let name in selectores[selector]) {
+                let value = selectores[selector][name];
+
+                if (_.isFunction(value)) {
+                    value = value.call(this);
+                }
+
+                _.each(elementList, function (element) {
+                    handler.apply(this, [element, name, value]);
+                });
+            }
+        }
+    }
+}
