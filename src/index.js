@@ -5,7 +5,7 @@ const patch = require('snabbdom').init([
     require('snabbdom/modules/eventlisteners').default,
 ]);
 
-const EventEmitter = require('eventemitter3');
+const EventEmitter = require('events').EventEmitter;
 
 require('./polyfill');
 
@@ -13,6 +13,7 @@ const Template = require('./template');
 const Observer = require('./observer');
 const parser = require('./parser');
 const _private = require('./private');
+const _ = require('./utils');
 
 const HIDDEN = ['hidden', 'mozHidden', 'webkitHidden'];
 
@@ -54,7 +55,15 @@ class WebScript {
 
         _this.isOnVisibilityChange = false;
 
-        _this.template = new Template(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
+        let html = element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>');
+
+        // 是否压缩代码
+        let removeHTMLWhitespace = _.getObject(options, 'config.removeHTMLWhitespace', true);
+        if (removeHTMLWhitespace) {
+            html = html.replace(/([a-z%]>|\s%>)\s+(<[a-z]|<%\s)/igm, '$1$2');
+        }
+
+        _this.template = new Template(html);
         let observer = _this.observer = new Observer(options.data || {});
 
         observer.attach(function () {
@@ -87,11 +96,13 @@ class WebScript {
         let $this = this;
         let _this = _private($this);
 
-        if (_this.frame) {
+        if (_this.isRenderPending) {
             return;
         }
 
-        _this.frame = requestAnimationFrame(function () {
+        _this.isRenderPending = true;
+
+        _.nextTick(function renderNextTick() {
             let data = _this.observer.target;
 
             let html = _this.template.render(data);
@@ -104,17 +115,26 @@ class WebScript {
 
             vnodeTemp = null;
 
-            _this.frame = null;
+            _this.isRenderPending = false;
+
+            _this.emitter.emit('render');
         });
     }
 
     on(event, listener) {
-        _private(this).emitter.addListener(event, listener);
-        return this;
+        let $this = this;
+        _private($this).emitter.addListener(event, function() {
+            listener.apply($this, arguments);
+        });
+        return $this;
     }
 
     off(event, listener) {
         _private(this).emitter.removeListener(event, listener);
+    }
+
+    emit(event, ...args) {
+        _private(this).emitter.emit(event, ...args);
     }
 }
 

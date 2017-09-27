@@ -12,7 +12,6 @@
   "license": "ISC",
   "dependencies": {
     "core-js": "^2.5.0",
-    "eventemitter3": "^2.0.3",
     "proxy-polyfill": "^0.1.7",
     "raf": "^3.3.2",
     "snabbdom": "^0.6.9"

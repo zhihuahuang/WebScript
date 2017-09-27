@@ -1,3 +1,6 @@
+function emptyFunction () {
+}
+
 function isType (value, type) {
     return Object.prototype.toString.call(value) === `[object ${type}]`;
 }
@@ -16,6 +19,10 @@ function isObject (object) {
 
 function isFunction (fn) {
     return isType(fn, 'Function');
+}
+
+function toString (value) {
+    return '' + value;
 }
 
 function each (list, fn) {
@@ -68,6 +75,52 @@ function toCamelCase (name) {
     });
 }
 
+/**
+ * Checks if `value` is a native code.
+ *
+ * @param object
+ * @returns {boolean}
+ */
+function isNative (object) {
+    return isFunction(object) && /native code/.test(object.toString());
+}
+
+/**
+ * Implement like nodejs process.nextTick
+ *
+ * @param {function} callback
+ * @return {undefined}
+ */
+const nextTick = (function () {
+    if (typeof Promise !== 'undefined' && isNative(Promise)) {
+        return function (callback) {
+            Promise.resolve().then(callback);
+        };
+    }
+    else if ( typeof MutationObserver !== 'undefined' && isNative(MutationObserver)) {
+        let counter = 1;
+        let textNode = document.createTextNode(toString(counter));
+        let mutationCallback = emptyFunction;
+
+        let mutationObserver = new MutationObserver(function () {
+            mutationCallback();
+        });
+        mutationObserver.observe(textNode, {
+            characterData: true
+        });
+
+        return function (callback) {
+            mutationCallback = isFunction(callback) ? callback : emptyFunction;
+            textNode.data = (counter + 1) % 2;
+        };
+    }
+    else {
+        return function (callback) {
+            setTimeout(callback, 0);
+        };
+    }
+}());
+
 module.exports = {
     isString,
     isArray,
@@ -76,5 +129,6 @@ module.exports = {
     each,
     getObject,
     setObject,
-    toCamelCase
+    toCamelCase,
+    nextTick,
 };

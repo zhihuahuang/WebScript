@@ -15,65 +15,92 @@ function parseDOM (dom) {
 
     let tagName = dom.tagName,
         selector = tagName,
-        hData = {
+        data = {
             attrs: {},
             props: {},
             on: {}
         },
         children = [];
 
-    if (dom.id) {
-        selector += '#' + dom.id;
-    }
-    if (dom.className) {
-        selector += '.' + dom.className.trim().replace(/\s+/, '.');
-    }
+    let bindVar = null;
 
-    // 解析属性
-    let attributes = dom.attributes;
+    // 测试 forEach 性能最好
+    Array.prototype.forEach.call(dom.attributes, function (attr) {
+        let attrName = attr.name,
+            attrValue = attr.value;
 
-    let i,
-        length;
+        let eventMatch = /^on-([a-z].*)/i.exec(attrName);
 
-    for(i = 0, length = attributes.length; i < length; i++) {
-        (function (name, value) {
-            let eventMatch = /^on-([a-z].*)/i.exec(name);
-            let bindMatch = /^::(.*)/.exec(value);
-            // Var Bind
-            if (name == "name" && bindMatch && (tagName == "INPUT" || tagName == "TEXTAREA" || tagName == "SELECT")) {
-                value = bindMatch[1];
-                if (dom.type == 'radio') {
-                    hData.attrs.name = value;
-                    hData.props.checked = (dom.value == _.getObject($this.data, value));
-                    hData.on.change = function (event) {
-                        _.setObject($this.data, value, event.target.value);
+        // Event
+        if (eventMatch) {
+            let eventName = eventMatch[1];
+            data.on[eventName] = _.getObject($this.data, attrValue, function () {}).bind($this);
+        }
+        // Attr
+        else {
+            switch (attrName) {
+                case 'id':
+                    selector += '#' + attr.value.trim();
+                    break;
+
+                case 'class':
+                    let className = attr.value.trim();
+                    if (className) {
+                        selector += '.' + className.replace(/\s+/, '.');
                     }
-                }
-                else if (dom.type == 'checkbox') {
-                    hData.props.checked = _.getObject($this.data, value);
-                    hData.on.change = function (event) {
-                        _.setObject($this.data, value, event.target.checked);
-                    }
-                }
-                else {
-                    hData.props.value = _.getObject($this.data, value);
-                    hData.on.input = hData.on.change = function (event) {
-                        _.setObject($this.data, value, event.target.value);
-                    }
-                }
+                    break;
+
+                case 'bind':
+                    bindVar = attrValue;
+                    break;
+
+                default:
+                    data.attrs[attrName] = attrValue;
             }
-            else if (eventMatch) {
-                hData.on[eventMatch[1]] = _.getObject($this.data, value, function () {}).bind($this);
-            }
-            else if (name != 'id' && name != 'class') {
-                hData.attrs[_.toCamelCase(name)] = value;
-            }
-        }(attributes[i].name, attributes[i].value));
+        }
+    });
+
+    if (bindVar && (/^INPUT|TEXTAREA|SELECT$/.test(tagName) || data.attrs.contenteditable === 'true')) {
+        if (tagName == 'INPUT' && data.attrs.type == 'radio') {
+            data.props.checked = (data.attrs.value == _.getObject($this.data, bindVar));
+            data.on.change = function (event) {
+                console.log(event.target);
+                _.setObject($this.data, bindVar, event.target.value);
+            };
+        }
+        else if (tagName == 'INPUT' && data.attrs.type == 'checkbox') {
+            data.props.checked = (data.attrs.value == _.getObject($this.data, bindVar));
+            data.on.change = function (event) {
+                _.setObject($this.data, bindVar, event.target.checked);
+            };
+        }
+        else {
+            data.props.value = _.getObject($this.data, bindVar);
+            data.on.input = data.on.change = function (event) {
+                _.setObject($this.data, bindVar, event.target.value);
+            };
+        }
     }
 
-    for(i = 0, length = dom.childNodes.length; i < length; i++){
-        let child = dom.childNodes[i];
-        if (child.nodeType == Node.TEXT_NODE) {
+    let childLength = dom.childNodes.length;
+
+    if (childLength > 1) {
+        let child = dom.firstChild;
+
+        while(child !== null) {
+            if (child.nodeType === Node.TEXT_NODE) {
+                children.push(child.textContent);
+            }
+            else {
+                children.push(parseDOM.call(this, child));
+            }
+            child = child.nextSibling; // 某些浏览器下 nextSibling 的性能比 childNodes 更好一些
+        }
+    }
+    else if (childLength == 1) {
+        let child = dom.firstChild;
+
+        if (child.nodeType === Node.TEXT_NODE) {
             children.push(child.textContent);
         }
         else {
@@ -81,12 +108,11 @@ function parseDOM (dom) {
         }
     }
 
-    return h(selector, hData, children);
+    return h(selector, data, children);
 }
 
 module.exports = function (html) {
     let dom = parseFromString(html);
-    console.log(this);
 
     /* Class */
     parseSelector.apply(this, [dom, _private(this).classes, function (element, name, value) {

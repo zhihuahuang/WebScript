@@ -1,15 +1,15 @@
-const EventEmitter = require('eventemitter3');
+const EventEmitter = require('events').EventEmitter;
 
 const METHODS = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
 const EVENT_DATA_CHANGE = 'datachange';
 
-const isSupportProxy = !!(global || self).Proxy;
+const IS_SUPPORT_PROXY = !!(global || self).Proxy;
 
-if (!isSupportProxy) {
+if (!IS_SUPPORT_PROXY) {
     require('proxy-polyfill/proxy.min');
 }
 
-const utils = require('./utils');
+const _ = require('./utils');
 
 const _private = require('./private');
 
@@ -30,7 +30,7 @@ class Observer {
             }
         };
 
-        if (isSupportProxy) {
+        if (IS_SUPPORT_PROXY) {
             handler['deleteProperty'] = function (target, property) {
                 delete target[property];
                 notify.call(_this);
@@ -59,12 +59,15 @@ class Observer {
  */
 function notify (target, property, value) {
     let _this = this;
-    if(!_this.timer) {
-        _this.timer = setTimeout(function () {
-            _this.timer = null;
-            _this.emitter.emit(EVENT_DATA_CHANGE, target, property, value);
-        }, 0);
+    if(_this.isNotifyPending) {
+        return;
     }
+
+    _this.isNotifyPending = true;
+    _.nextTick(function () {
+        _this.isNotifyPending = false;
+        _this.emitter.emit(EVENT_DATA_CHANGE, target, property, value);
+    });
 }
 
 module.exports = Observer;
@@ -76,10 +79,10 @@ module.exports = Observer;
  * @returns {*}
  */
 function proxy (target, handler) {
-    if (utils.isArray(target)) {
+    if (_.isArray(target)) {
         target = proxyArray(target, handler);
     }
-    else if (utils.isObject(target)) {
+    else if (_.isObject(target)) {
         target = proxyObject(target, handler);
     }
 
@@ -107,13 +110,13 @@ function proxyObject (obj, handler) {
  */
 function proxyArray (array, handler) {
     array.forEach(function (value, index) {
-        if(utils.isObject(value)) {
+        if(_.isObject(value)) {
             array[index] = new Proxy(value, handler);
         }
     });
-    if (isSupportProxy) {
+    if (IS_SUPPORT_PROXY) {
         array.forEach(function (value, index) {
-            if(utils.isObject(value)) {
+            if(_.isObject(value)) {
                 array[index] = new Proxy(value, handler);
             }
         });
