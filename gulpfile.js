@@ -15,6 +15,8 @@ gulp.task('main', function () {
             ["es2015", { "loose": true }]
         ],
     }))
+    .ignore('entities/maps/entities.json')
+    .ignore('entities/maps/xml.json')
     .bundle()
     .pipe(source('webscript.js'))
     .pipe(gulp.dest(__dirname + '/dist'))

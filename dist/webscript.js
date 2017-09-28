@@ -1,317 +1,1630 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-'use strict';
 
-var has = Object.prototype.hasOwnProperty
-  , prefix = '~';
+},{}],2:[function(require,module,exports){
+var decodeMap = require("../maps/decode.json");
 
-/**
- * Constructor to create a storage for our `EE` objects.
- * An `Events` instance is a plain object whose properties are event names.
- *
- * @constructor
- * @api private
- */
-function Events() {}
+module.exports = decodeCodePoint;
 
-//
-// We try to not inherit from `Object.prototype`. In some engines creating an
-// instance in this way is faster than calling `Object.create(null)` directly.
-// If `Object.create(null)` is not supported we prefix the event names with a
-// character to make sure that the built-in object properties are not
-// overridden or used as an attack vector.
-//
-if (Object.create) {
-  Events.prototype = Object.create(null);
+// modified version of https://github.com/mathiasbynens/he/blob/master/src/he.js#L94-L119
+function decodeCodePoint(codePoint){
 
-  //
-  // This hack is needed because the `__proto__` property is still inherited in
-  // some old browsers like Android 4, iPhone 5.1, Opera 11 and Safari 5.
-  //
-  if (!new Events().__proto__) prefix = false;
+	if((codePoint >= 0xD800 && codePoint <= 0xDFFF) || codePoint > 0x10FFFF){
+		return "\uFFFD";
+	}
+
+	if(codePoint in decodeMap){
+		codePoint = decodeMap[codePoint];
+	}
+
+	var output = "";
+
+	if(codePoint > 0xFFFF){
+		codePoint -= 0x10000;
+		output += String.fromCharCode(codePoint >>> 10 & 0x3FF | 0xD800);
+		codePoint = 0xDC00 | codePoint & 0x3FF;
+	}
+
+	output += String.fromCharCode(codePoint);
+	return output;
 }
 
-/**
- * Representation of a single event listener.
- *
- * @param {Function} fn The listener function.
- * @param {Mixed} context The context to invoke the listener with.
- * @param {Boolean} [once=false] Specify if the listener is a one-time listener.
- * @constructor
- * @api private
- */
-function EE(fn, context, once) {
-  this.fn = fn;
-  this.context = context;
-  this.once = once || false;
-}
+},{"../maps/decode.json":3}],3:[function(require,module,exports){
+module.exports={"0":65533,"128":8364,"130":8218,"131":402,"132":8222,"133":8230,"134":8224,"135":8225,"136":710,"137":8240,"138":352,"139":8249,"140":338,"142":381,"145":8216,"146":8217,"147":8220,"148":8221,"149":8226,"150":8211,"151":8212,"152":732,"153":8482,"154":353,"155":8250,"156":339,"158":382,"159":376}
+},{}],4:[function(require,module,exports){
+module.exports={"Aacute":"\u00C1","aacute":"\u00E1","Acirc":"\u00C2","acirc":"\u00E2","acute":"\u00B4","AElig":"\u00C6","aelig":"\u00E6","Agrave":"\u00C0","agrave":"\u00E0","amp":"&","AMP":"&","Aring":"\u00C5","aring":"\u00E5","Atilde":"\u00C3","atilde":"\u00E3","Auml":"\u00C4","auml":"\u00E4","brvbar":"\u00A6","Ccedil":"\u00C7","ccedil":"\u00E7","cedil":"\u00B8","cent":"\u00A2","copy":"\u00A9","COPY":"\u00A9","curren":"\u00A4","deg":"\u00B0","divide":"\u00F7","Eacute":"\u00C9","eacute":"\u00E9","Ecirc":"\u00CA","ecirc":"\u00EA","Egrave":"\u00C8","egrave":"\u00E8","ETH":"\u00D0","eth":"\u00F0","Euml":"\u00CB","euml":"\u00EB","frac12":"\u00BD","frac14":"\u00BC","frac34":"\u00BE","gt":">","GT":">","Iacute":"\u00CD","iacute":"\u00ED","Icirc":"\u00CE","icirc":"\u00EE","iexcl":"\u00A1","Igrave":"\u00CC","igrave":"\u00EC","iquest":"\u00BF","Iuml":"\u00CF","iuml":"\u00EF","laquo":"\u00AB","lt":"<","LT":"<","macr":"\u00AF","micro":"\u00B5","middot":"\u00B7","nbsp":"\u00A0","not":"\u00AC","Ntilde":"\u00D1","ntilde":"\u00F1","Oacute":"\u00D3","oacute":"\u00F3","Ocirc":"\u00D4","ocirc":"\u00F4","Ograve":"\u00D2","ograve":"\u00F2","ordf":"\u00AA","ordm":"\u00BA","Oslash":"\u00D8","oslash":"\u00F8","Otilde":"\u00D5","otilde":"\u00F5","Ouml":"\u00D6","ouml":"\u00F6","para":"\u00B6","plusmn":"\u00B1","pound":"\u00A3","quot":"\"","QUOT":"\"","raquo":"\u00BB","reg":"\u00AE","REG":"\u00AE","sect":"\u00A7","shy":"\u00AD","sup1":"\u00B9","sup2":"\u00B2","sup3":"\u00B3","szlig":"\u00DF","THORN":"\u00DE","thorn":"\u00FE","times":"\u00D7","Uacute":"\u00DA","uacute":"\u00FA","Ucirc":"\u00DB","ucirc":"\u00FB","Ugrave":"\u00D9","ugrave":"\u00F9","uml":"\u00A8","Uuml":"\u00DC","uuml":"\u00FC","Yacute":"\u00DD","yacute":"\u00FD","yen":"\u00A5","yuml":"\u00FF"}
+},{}],5:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-/**
- * Minimal `EventEmitter` interface that is molded against the Node.js
- * `EventEmitter` interface.
- *
- * @constructor
- * @api public
- */
 function EventEmitter() {
-  this._events = new Events();
-  this._eventsCount = 0;
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
 }
+module.exports = EventEmitter;
 
-/**
- * Return an array listing the events for which the emitter has registered
- * listeners.
- *
- * @returns {Array}
- * @api public
- */
-EventEmitter.prototype.eventNames = function eventNames() {
-  var names = []
-    , events
-    , name;
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
 
-  if (this._eventsCount === 0) return names;
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
 
-  for (name in (events = this._events)) {
-    if (has.call(events, name)) names.push(prefix ? name.slice(1) : name);
-  }
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
 
-  if (Object.getOwnPropertySymbols) {
-    return names.concat(Object.getOwnPropertySymbols(events));
-  }
-
-  return names;
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
 };
 
-/**
- * Return the listeners registered for a given event.
- *
- * @param {String|Symbol} event The event name.
- * @param {Boolean} exists Only check if there are listeners.
- * @returns {Array|Boolean}
- * @api public
- */
-EventEmitter.prototype.listeners = function listeners(event, exists) {
-  var evt = prefix ? prefix + event : event
-    , available = this._events[evt];
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
 
-  if (exists) return !!available;
-  if (!available) return [];
-  if (available.fn) return [available.fn];
+  if (!this._events)
+    this._events = {};
 
-  for (var i = 0, l = available.length, ee = new Array(l); i < l; i++) {
-    ee[i] = available[i].fn;
-  }
-
-  return ee;
-};
-
-/**
- * Calls each of the listeners registered for a given event.
- *
- * @param {String|Symbol} event The event name.
- * @returns {Boolean} `true` if the event had listeners, else `false`.
- * @api public
- */
-EventEmitter.prototype.emit = function emit(event, a1, a2, a3, a4, a5) {
-  var evt = prefix ? prefix + event : event;
-
-  if (!this._events[evt]) return false;
-
-  var listeners = this._events[evt]
-    , len = arguments.length
-    , args
-    , i;
-
-  if (listeners.fn) {
-    if (listeners.once) this.removeListener(event, listeners.fn, undefined, true);
-
-    switch (len) {
-      case 1: return listeners.fn.call(listeners.context), true;
-      case 2: return listeners.fn.call(listeners.context, a1), true;
-      case 3: return listeners.fn.call(listeners.context, a1, a2), true;
-      case 4: return listeners.fn.call(listeners.context, a1, a2, a3), true;
-      case 5: return listeners.fn.call(listeners.context, a1, a2, a3, a4), true;
-      case 6: return listeners.fn.call(listeners.context, a1, a2, a3, a4, a5), true;
-    }
-
-    for (i = 1, args = new Array(len -1); i < len; i++) {
-      args[i - 1] = arguments[i];
-    }
-
-    listeners.fn.apply(listeners.context, args);
-  } else {
-    var length = listeners.length
-      , j;
-
-    for (i = 0; i < length; i++) {
-      if (listeners[i].once) this.removeListener(event, listeners[i].fn, undefined, true);
-
-      switch (len) {
-        case 1: listeners[i].fn.call(listeners[i].context); break;
-        case 2: listeners[i].fn.call(listeners[i].context, a1); break;
-        case 3: listeners[i].fn.call(listeners[i].context, a1, a2); break;
-        case 4: listeners[i].fn.call(listeners[i].context, a1, a2, a3); break;
-        default:
-          if (!args) for (j = 1, args = new Array(len -1); j < len; j++) {
-            args[j - 1] = arguments[j];
-          }
-
-          listeners[i].fn.apply(listeners[i].context, args);
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      } else {
+        // At least give some kind of context to the user
+        var err = new Error('Uncaught, unspecified "error" event. (' + er + ')');
+        err.context = er;
+        throw err;
       }
     }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
   }
 
   return true;
 };
 
-/**
- * Add a listener for a given event.
- *
- * @param {String|Symbol} event The event name.
- * @param {Function} fn The listener function.
- * @param {Mixed} [context=this] The context to invoke the listener with.
- * @returns {EventEmitter} `this`.
- * @api public
- */
-EventEmitter.prototype.on = function on(event, fn, context) {
-  var listener = new EE(fn, context || this)
-    , evt = prefix ? prefix + event : event;
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
 
-  if (!this._events[evt]) this._events[evt] = listener, this._eventsCount++;
-  else if (!this._events[evt].fn) this._events[evt].push(listener);
-  else this._events[evt] = [this._events[evt], listener];
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
 
-  return this;
-};
+  if (!this._events)
+    this._events = {};
 
-/**
- * Add a one-time listener for a given event.
- *
- * @param {String|Symbol} event The event name.
- * @param {Function} fn The listener function.
- * @param {Mixed} [context=this] The context to invoke the listener with.
- * @returns {EventEmitter} `this`.
- * @api public
- */
-EventEmitter.prototype.once = function once(event, fn, context) {
-  var listener = new EE(fn, context || this, true)
-    , evt = prefix ? prefix + event : event;
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
 
-  if (!this._events[evt]) this._events[evt] = listener, this._eventsCount++;
-  else if (!this._events[evt].fn) this._events[evt].push(listener);
-  else this._events[evt] = [this._events[evt], listener];
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
 
-  return this;
-};
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
 
-/**
- * Remove the listeners of a given event.
- *
- * @param {String|Symbol} event The event name.
- * @param {Function} fn Only remove the listeners that match this function.
- * @param {Mixed} context Only remove the listeners that have this context.
- * @param {Boolean} once Only remove one-time listeners.
- * @returns {EventEmitter} `this`.
- * @api public
- */
-EventEmitter.prototype.removeListener = function removeListener(event, fn, context, once) {
-  var evt = prefix ? prefix + event : event;
-
-  if (!this._events[evt]) return this;
-  if (!fn) {
-    if (--this._eventsCount === 0) this._events = new Events();
-    else delete this._events[evt];
-    return this;
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
   }
 
-  var listeners = this._events[evt];
+  return this;
+};
 
-  if (listeners.fn) {
-    if (
-         listeners.fn === fn
-      && (!once || listeners.once)
-      && (!context || listeners.context === context)
-    ) {
-      if (--this._eventsCount === 0) this._events = new Events();
-      else delete this._events[evt];
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
     }
-  } else {
-    for (var i = 0, events = [], length = listeners.length; i < length; i++) {
-      if (
-           listeners[i].fn !== fn
-        || (once && !listeners[i].once)
-        || (context && listeners[i].context !== context)
-      ) {
-        events.push(listeners[i]);
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
       }
     }
 
-    //
-    // Reset the array, or remove it completely if we have no more listeners.
-    //
-    if (events.length) this._events[evt] = events.length === 1 ? events[0] : events;
-    else if (--this._eventsCount === 0) this._events = new Events();
-    else delete this._events[evt];
-  }
+    if (position < 0)
+      return this;
 
-  return this;
-};
-
-/**
- * Remove all listeners, or those of the specified event.
- *
- * @param {String|Symbol} [event] The event name.
- * @returns {EventEmitter} `this`.
- * @api public
- */
-EventEmitter.prototype.removeAllListeners = function removeAllListeners(event) {
-  var evt;
-
-  if (event) {
-    evt = prefix ? prefix + event : event;
-    if (this._events[evt]) {
-      if (--this._eventsCount === 0) this._events = new Events();
-      else delete this._events[evt];
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
     }
-  } else {
-    this._events = new Events();
-    this._eventsCount = 0;
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
   }
 
   return this;
 };
 
-//
-// Alias methods names because people roll like that.
-//
-EventEmitter.prototype.off = EventEmitter.prototype.removeListener;
-EventEmitter.prototype.addListener = EventEmitter.prototype.on;
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
 
-//
-// This function doesn't apply anymore.
-//
-EventEmitter.prototype.setMaxListeners = function setMaxListeners() {
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
   return this;
 };
 
-//
-// Expose the prefix.
-//
-EventEmitter.prefixed = prefix;
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
 
-//
-// Allow `EventEmitter` to be imported as module namespace.
-//
-EventEmitter.EventEmitter = EventEmitter;
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
 
-//
-// Expose the module.
-//
-if ('undefined' !== typeof module) {
-  module.exports = EventEmitter;
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
 }
 
-},{}],2:[function(require,module,exports){
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+},{}],6:[function(require,module,exports){
+var Tokenizer = require("./Tokenizer.js");
+
+/*
+	Options:
+
+	xmlMode: Disables the special behavior for script/style tags (false by default)
+	lowerCaseAttributeNames: call .toLowerCase for each attribute name (true if xmlMode is `false`)
+	lowerCaseTags: call .toLowerCase for each tag name (true if xmlMode is `false`)
+*/
+
+/*
+	Callbacks:
+
+	oncdataend,
+	oncdatastart,
+	onclosetag,
+	oncomment,
+	oncommentend,
+	onerror,
+	onopentag,
+	onprocessinginstruction,
+	onreset,
+	ontext
+*/
+
+var formTags = {
+	input: true,
+	option: true,
+	optgroup: true,
+	select: true,
+	button: true,
+	datalist: true,
+	textarea: true
+};
+
+var openImpliesClose = {
+	tr      : { tr:true, th:true, td:true },
+	th      : { th:true },
+	td      : { thead:true, th:true, td:true },
+	body    : { head:true, link:true, script:true },
+	li      : { li:true },
+	p       : { p:true },
+	h1      : { p:true },
+	h2      : { p:true },
+	h3      : { p:true },
+	h4      : { p:true },
+	h5      : { p:true },
+	h6      : { p:true },
+	select  : formTags,
+	input   : formTags,
+	output  : formTags,
+	button  : formTags,
+	datalist: formTags,
+	textarea: formTags,
+	option  : { option:true },
+	optgroup: { optgroup:true }
+};
+
+var voidElements = {
+	__proto__: null,
+	area: true,
+	base: true,
+	basefont: true,
+	br: true,
+	col: true,
+	command: true,
+	embed: true,
+	frame: true,
+	hr: true,
+	img: true,
+	input: true,
+	isindex: true,
+	keygen: true,
+	link: true,
+	meta: true,
+	param: true,
+	source: true,
+	track: true,
+	wbr: true,
+
+	//common self closing svg elements
+	path: true,
+	circle: true,
+	ellipse: true,
+	line: true,
+	rect: true,
+	use: true,
+	stop: true,
+	polyline: true,
+	polygon: true
+};
+
+var re_nameEnd = /\s|\//;
+
+function Parser(cbs, options){
+	this._options = options || {};
+	this._cbs = cbs || {};
+
+	this._tagname = "";
+	this._attribname = "";
+	this._attribvalue = "";
+	this._attribs = null;
+	this._stack = [];
+
+	this.startIndex = 0;
+	this.endIndex = null;
+
+	this._lowerCaseTagNames = "lowerCaseTags" in this._options ?
+									!!this._options.lowerCaseTags :
+									!this._options.xmlMode;
+	this._lowerCaseAttributeNames = "lowerCaseAttributeNames" in this._options ?
+									!!this._options.lowerCaseAttributeNames :
+									!this._options.xmlMode;
+
+	if(this._options.Tokenizer) {
+		Tokenizer = this._options.Tokenizer;
+	}
+	this._tokenizer = new Tokenizer(this._options, this);
+
+	if(this._cbs.onparserinit) this._cbs.onparserinit(this);
+}
+
+require("inherits")(Parser, require("events").EventEmitter);
+
+Parser.prototype._updatePosition = function(initialOffset){
+	if(this.endIndex === null){
+		if(this._tokenizer._sectionStart <= initialOffset){
+			this.startIndex = 0;
+		} else {
+			this.startIndex = this._tokenizer._sectionStart - initialOffset;
+		}
+	}
+	else this.startIndex = this.endIndex + 1;
+	this.endIndex = this._tokenizer.getAbsoluteIndex();
+};
+
+//Tokenizer event handlers
+Parser.prototype.ontext = function(data){
+	this._updatePosition(1);
+	this.endIndex--;
+
+	if(this._cbs.ontext) this._cbs.ontext(data);
+};
+
+Parser.prototype.onopentagname = function(name){
+	if(this._lowerCaseTagNames){
+		name = name.toLowerCase();
+	}
+
+	this._tagname = name;
+
+	if(!this._options.xmlMode && name in openImpliesClose) {
+		for(
+			var el;
+			(el = this._stack[this._stack.length - 1]) in openImpliesClose[name];
+			this.onclosetag(el)
+		);
+	}
+
+	if(this._options.xmlMode || !(name in voidElements)){
+		this._stack.push(name);
+	}
+
+	if(this._cbs.onopentagname) this._cbs.onopentagname(name);
+	if(this._cbs.onopentag) this._attribs = {};
+};
+
+Parser.prototype.onopentagend = function(){
+	this._updatePosition(1);
+
+	if(this._attribs){
+		if(this._cbs.onopentag) this._cbs.onopentag(this._tagname, this._attribs);
+		this._attribs = null;
+	}
+
+	if(!this._options.xmlMode && this._cbs.onclosetag && this._tagname in voidElements){
+		this._cbs.onclosetag(this._tagname);
+	}
+
+	this._tagname = "";
+};
+
+Parser.prototype.onclosetag = function(name){
+	this._updatePosition(1);
+
+	if(this._lowerCaseTagNames){
+		name = name.toLowerCase();
+	}
+
+	if(this._stack.length && (!(name in voidElements) || this._options.xmlMode)){
+		var pos = this._stack.lastIndexOf(name);
+		if(pos !== -1){
+			if(this._cbs.onclosetag){
+				pos = this._stack.length - pos;
+				while(pos--) this._cbs.onclosetag(this._stack.pop());
+			}
+			else this._stack.length = pos;
+		} else if(name === "p" && !this._options.xmlMode){
+			this.onopentagname(name);
+			this._closeCurrentTag();
+		}
+	} else if(!this._options.xmlMode && (name === "br" || name === "p")){
+		this.onopentagname(name);
+		this._closeCurrentTag();
+	}
+};
+
+Parser.prototype.onselfclosingtag = function(){
+	if(this._options.xmlMode || this._options.recognizeSelfClosing){
+		this._closeCurrentTag();
+	} else {
+		this.onopentagend();
+	}
+};
+
+Parser.prototype._closeCurrentTag = function(){
+	var name = this._tagname;
+
+	this.onopentagend();
+
+	//self-closing tags will be on the top of the stack
+	//(cheaper check than in onclosetag)
+	if(this._stack[this._stack.length - 1] === name){
+		if(this._cbs.onclosetag){
+			this._cbs.onclosetag(name);
+		}
+		this._stack.pop();
+	}
+};
+
+Parser.prototype.onattribname = function(name){
+	if(this._lowerCaseAttributeNames){
+		name = name.toLowerCase();
+	}
+	this._attribname = name;
+};
+
+Parser.prototype.onattribdata = function(value){
+	this._attribvalue += value;
+};
+
+Parser.prototype.onattribend = function(){
+	if(this._cbs.onattribute) this._cbs.onattribute(this._attribname, this._attribvalue);
+	if(
+		this._attribs &&
+		!Object.prototype.hasOwnProperty.call(this._attribs, this._attribname)
+	){
+		this._attribs[this._attribname] = this._attribvalue;
+	}
+	this._attribname = "";
+	this._attribvalue = "";
+};
+
+Parser.prototype._getInstructionName = function(value){
+	var idx = value.search(re_nameEnd),
+	    name = idx < 0 ? value : value.substr(0, idx);
+
+	if(this._lowerCaseTagNames){
+		name = name.toLowerCase();
+	}
+
+	return name;
+};
+
+Parser.prototype.ondeclaration = function(value){
+	if(this._cbs.onprocessinginstruction){
+		var name = this._getInstructionName(value);
+		this._cbs.onprocessinginstruction("!" + name, "!" + value);
+	}
+};
+
+Parser.prototype.onprocessinginstruction = function(value){
+	if(this._cbs.onprocessinginstruction){
+		var name = this._getInstructionName(value);
+		this._cbs.onprocessinginstruction("?" + name, "?" + value);
+	}
+};
+
+Parser.prototype.oncomment = function(value){
+	this._updatePosition(4);
+
+	if(this._cbs.oncomment) this._cbs.oncomment(value);
+	if(this._cbs.oncommentend) this._cbs.oncommentend();
+};
+
+Parser.prototype.oncdata = function(value){
+	this._updatePosition(1);
+
+	if(this._options.xmlMode || this._options.recognizeCDATA){
+		if(this._cbs.oncdatastart) this._cbs.oncdatastart();
+		if(this._cbs.ontext) this._cbs.ontext(value);
+		if(this._cbs.oncdataend) this._cbs.oncdataend();
+	} else {
+		this.oncomment("[CDATA[" + value + "]]");
+	}
+};
+
+Parser.prototype.onerror = function(err){
+	if(this._cbs.onerror) this._cbs.onerror(err);
+};
+
+Parser.prototype.onend = function(){
+	if(this._cbs.onclosetag){
+		for(
+			var i = this._stack.length;
+			i > 0;
+			this._cbs.onclosetag(this._stack[--i])
+		);
+	}
+	if(this._cbs.onend) this._cbs.onend();
+};
+
+
+//Resets the parser to a blank state, ready to parse a new HTML document
+Parser.prototype.reset = function(){
+	if(this._cbs.onreset) this._cbs.onreset();
+	this._tokenizer.reset();
+
+	this._tagname = "";
+	this._attribname = "";
+	this._attribs = null;
+	this._stack = [];
+
+	if(this._cbs.onparserinit) this._cbs.onparserinit(this);
+};
+
+//Parses a complete HTML document and pushes it to the handler
+Parser.prototype.parseComplete = function(data){
+	this.reset();
+	this.end(data);
+};
+
+Parser.prototype.write = function(chunk){
+	this._tokenizer.write(chunk);
+};
+
+Parser.prototype.end = function(chunk){
+	this._tokenizer.end(chunk);
+};
+
+Parser.prototype.pause = function(){
+	this._tokenizer.pause();
+};
+
+Parser.prototype.resume = function(){
+	this._tokenizer.resume();
+};
+
+//alias for backwards compat
+Parser.prototype.parseChunk = Parser.prototype.write;
+Parser.prototype.done = Parser.prototype.end;
+
+module.exports = Parser;
+
+},{"./Tokenizer.js":7,"events":5,"inherits":8}],7:[function(require,module,exports){
+module.exports = Tokenizer;
+
+var decodeCodePoint = require("entities/lib/decode_codepoint.js"),
+    entityMap = require("entities/maps/entities.json"),
+    legacyMap = require("entities/maps/legacy.json"),
+    xmlMap    = require("entities/maps/xml.json"),
+
+    i = 0,
+
+    TEXT                      = i++,
+    BEFORE_TAG_NAME           = i++, //after <
+    IN_TAG_NAME               = i++,
+    IN_SELF_CLOSING_TAG       = i++,
+    BEFORE_CLOSING_TAG_NAME   = i++,
+    IN_CLOSING_TAG_NAME       = i++,
+    AFTER_CLOSING_TAG_NAME    = i++,
+
+    //attributes
+    BEFORE_ATTRIBUTE_NAME     = i++,
+    IN_ATTRIBUTE_NAME         = i++,
+    AFTER_ATTRIBUTE_NAME      = i++,
+    BEFORE_ATTRIBUTE_VALUE    = i++,
+    IN_ATTRIBUTE_VALUE_DQ     = i++, // "
+    IN_ATTRIBUTE_VALUE_SQ     = i++, // '
+    IN_ATTRIBUTE_VALUE_NQ     = i++,
+
+    //declarations
+    BEFORE_DECLARATION        = i++, // !
+    IN_DECLARATION            = i++,
+
+    //processing instructions
+    IN_PROCESSING_INSTRUCTION = i++, // ?
+
+    //comments
+    BEFORE_COMMENT            = i++,
+    IN_COMMENT                = i++,
+    AFTER_COMMENT_1           = i++,
+    AFTER_COMMENT_2           = i++,
+
+    //cdata
+    BEFORE_CDATA_1            = i++, // [
+    BEFORE_CDATA_2            = i++, // C
+    BEFORE_CDATA_3            = i++, // D
+    BEFORE_CDATA_4            = i++, // A
+    BEFORE_CDATA_5            = i++, // T
+    BEFORE_CDATA_6            = i++, // A
+    IN_CDATA                  = i++, // [
+    AFTER_CDATA_1             = i++, // ]
+    AFTER_CDATA_2             = i++, // ]
+
+    //special tags
+    BEFORE_SPECIAL            = i++, //S
+    BEFORE_SPECIAL_END        = i++,   //S
+
+    BEFORE_SCRIPT_1           = i++, //C
+    BEFORE_SCRIPT_2           = i++, //R
+    BEFORE_SCRIPT_3           = i++, //I
+    BEFORE_SCRIPT_4           = i++, //P
+    BEFORE_SCRIPT_5           = i++, //T
+    AFTER_SCRIPT_1            = i++, //C
+    AFTER_SCRIPT_2            = i++, //R
+    AFTER_SCRIPT_3            = i++, //I
+    AFTER_SCRIPT_4            = i++, //P
+    AFTER_SCRIPT_5            = i++, //T
+
+    BEFORE_STYLE_1            = i++, //T
+    BEFORE_STYLE_2            = i++, //Y
+    BEFORE_STYLE_3            = i++, //L
+    BEFORE_STYLE_4            = i++, //E
+    AFTER_STYLE_1             = i++, //T
+    AFTER_STYLE_2             = i++, //Y
+    AFTER_STYLE_3             = i++, //L
+    AFTER_STYLE_4             = i++, //E
+
+    BEFORE_ENTITY             = i++, //&
+    BEFORE_NUMERIC_ENTITY     = i++, //#
+    IN_NAMED_ENTITY           = i++,
+    IN_NUMERIC_ENTITY         = i++,
+    IN_HEX_ENTITY             = i++, //X
+
+    j = 0,
+
+    SPECIAL_NONE              = j++,
+    SPECIAL_SCRIPT            = j++,
+    SPECIAL_STYLE             = j++;
+
+function whitespace(c){
+	return c === " " || c === "\n" || c === "\t" || c === "\f" || c === "\r";
+}
+
+function characterState(char, SUCCESS){
+	return function(c){
+		if(c === char) this._state = SUCCESS;
+	};
+}
+
+function ifElseState(upper, SUCCESS, FAILURE){
+	var lower = upper.toLowerCase();
+
+	if(upper === lower){
+		return function(c){
+			if(c === lower){
+				this._state = SUCCESS;
+			} else {
+				this._state = FAILURE;
+				this._index--;
+			}
+		};
+	} else {
+		return function(c){
+			if(c === lower || c === upper){
+				this._state = SUCCESS;
+			} else {
+				this._state = FAILURE;
+				this._index--;
+			}
+		};
+	}
+}
+
+function consumeSpecialNameChar(upper, NEXT_STATE){
+	var lower = upper.toLowerCase();
+
+	return function(c){
+		if(c === lower || c === upper){
+			this._state = NEXT_STATE;
+		} else {
+			this._state = IN_TAG_NAME;
+			this._index--; //consume the token again
+		}
+	};
+}
+
+function Tokenizer(options, cbs){
+	this._state = TEXT;
+	this._buffer = "";
+	this._sectionStart = 0;
+	this._index = 0;
+	this._bufferOffset = 0; //chars removed from _buffer
+	this._baseState = TEXT;
+	this._special = SPECIAL_NONE;
+	this._cbs = cbs;
+	this._running = true;
+	this._ended = false;
+	this._xmlMode = !!(options && options.xmlMode);
+	this._decodeEntities = !!(options && options.decodeEntities);
+}
+
+Tokenizer.prototype._stateText = function(c){
+	if(c === "<"){
+		if(this._index > this._sectionStart){
+			this._cbs.ontext(this._getSection());
+		}
+		this._state = BEFORE_TAG_NAME;
+		this._sectionStart = this._index;
+	} else if(this._decodeEntities && this._special === SPECIAL_NONE && c === "&"){
+		if(this._index > this._sectionStart){
+			this._cbs.ontext(this._getSection());
+		}
+		this._baseState = TEXT;
+		this._state = BEFORE_ENTITY;
+		this._sectionStart = this._index;
+	}
+};
+
+Tokenizer.prototype._stateBeforeTagName = function(c){
+	if(c === "/"){
+		this._state = BEFORE_CLOSING_TAG_NAME;
+	} else if(c === "<"){
+		this._cbs.ontext(this._getSection());
+		this._sectionStart = this._index;
+	} else if(c === ">" || this._special !== SPECIAL_NONE || whitespace(c)) {
+		this._state = TEXT;
+	} else if(c === "!"){
+		this._state = BEFORE_DECLARATION;
+		this._sectionStart = this._index + 1;
+	} else if(c === "?"){
+		this._state = IN_PROCESSING_INSTRUCTION;
+		this._sectionStart = this._index + 1;
+	} else {
+		this._state = (!this._xmlMode && (c === "s" || c === "S")) ?
+						BEFORE_SPECIAL : IN_TAG_NAME;
+		this._sectionStart = this._index;
+	}
+};
+
+Tokenizer.prototype._stateInTagName = function(c){
+	if(c === "/" || c === ">" || whitespace(c)){
+		this._emitToken("onopentagname");
+		this._state = BEFORE_ATTRIBUTE_NAME;
+		this._index--;
+	}
+};
+
+Tokenizer.prototype._stateBeforeCloseingTagName = function(c){
+	if(whitespace(c));
+	else if(c === ">"){
+		this._state = TEXT;
+	} else if(this._special !== SPECIAL_NONE){
+		if(c === "s" || c === "S"){
+			this._state = BEFORE_SPECIAL_END;
+		} else {
+			this._state = TEXT;
+			this._index--;
+		}
+	} else {
+		this._state = IN_CLOSING_TAG_NAME;
+		this._sectionStart = this._index;
+	}
+};
+
+Tokenizer.prototype._stateInCloseingTagName = function(c){
+	if(c === ">" || whitespace(c)){
+		this._emitToken("onclosetag");
+		this._state = AFTER_CLOSING_TAG_NAME;
+		this._index--;
+	}
+};
+
+Tokenizer.prototype._stateAfterCloseingTagName = function(c){
+	//skip everything until ">"
+	if(c === ">"){
+		this._state = TEXT;
+		this._sectionStart = this._index + 1;
+	}
+};
+
+Tokenizer.prototype._stateBeforeAttributeName = function(c){
+	if(c === ">"){
+		this._cbs.onopentagend();
+		this._state = TEXT;
+		this._sectionStart = this._index + 1;
+	} else if(c === "/"){
+		this._state = IN_SELF_CLOSING_TAG;
+	} else if(!whitespace(c)){
+		this._state = IN_ATTRIBUTE_NAME;
+		this._sectionStart = this._index;
+	}
+};
+
+Tokenizer.prototype._stateInSelfClosingTag = function(c){
+	if(c === ">"){
+		this._cbs.onselfclosingtag();
+		this._state = TEXT;
+		this._sectionStart = this._index + 1;
+	} else if(!whitespace(c)){
+		this._state = BEFORE_ATTRIBUTE_NAME;
+		this._index--;
+	}
+};
+
+Tokenizer.prototype._stateInAttributeName = function(c){
+	if(c === "=" || c === "/" || c === ">" || whitespace(c)){
+		this._cbs.onattribname(this._getSection());
+		this._sectionStart = -1;
+		this._state = AFTER_ATTRIBUTE_NAME;
+		this._index--;
+	}
+};
+
+Tokenizer.prototype._stateAfterAttributeName = function(c){
+	if(c === "="){
+		this._state = BEFORE_ATTRIBUTE_VALUE;
+	} else if(c === "/" || c === ">"){
+		this._cbs.onattribend();
+		this._state = BEFORE_ATTRIBUTE_NAME;
+		this._index--;
+	} else if(!whitespace(c)){
+		this._cbs.onattribend();
+		this._state = IN_ATTRIBUTE_NAME;
+		this._sectionStart = this._index;
+	}
+};
+
+Tokenizer.prototype._stateBeforeAttributeValue = function(c){
+	if(c === "\""){
+		this._state = IN_ATTRIBUTE_VALUE_DQ;
+		this._sectionStart = this._index + 1;
+	} else if(c === "'"){
+		this._state = IN_ATTRIBUTE_VALUE_SQ;
+		this._sectionStart = this._index + 1;
+	} else if(!whitespace(c)){
+		this._state = IN_ATTRIBUTE_VALUE_NQ;
+		this._sectionStart = this._index;
+		this._index--; //reconsume token
+	}
+};
+
+Tokenizer.prototype._stateInAttributeValueDoubleQuotes = function(c){
+	if(c === "\""){
+		this._emitToken("onattribdata");
+		this._cbs.onattribend();
+		this._state = BEFORE_ATTRIBUTE_NAME;
+	} else if(this._decodeEntities && c === "&"){
+		this._emitToken("onattribdata");
+		this._baseState = this._state;
+		this._state = BEFORE_ENTITY;
+		this._sectionStart = this._index;
+	}
+};
+
+Tokenizer.prototype._stateInAttributeValueSingleQuotes = function(c){
+	if(c === "'"){
+		this._emitToken("onattribdata");
+		this._cbs.onattribend();
+		this._state = BEFORE_ATTRIBUTE_NAME;
+	} else if(this._decodeEntities && c === "&"){
+		this._emitToken("onattribdata");
+		this._baseState = this._state;
+		this._state = BEFORE_ENTITY;
+		this._sectionStart = this._index;
+	}
+};
+
+Tokenizer.prototype._stateInAttributeValueNoQuotes = function(c){
+	if(whitespace(c) || c === ">"){
+		this._emitToken("onattribdata");
+		this._cbs.onattribend();
+		this._state = BEFORE_ATTRIBUTE_NAME;
+		this._index--;
+	} else if(this._decodeEntities && c === "&"){
+		this._emitToken("onattribdata");
+		this._baseState = this._state;
+		this._state = BEFORE_ENTITY;
+		this._sectionStart = this._index;
+	}
+};
+
+Tokenizer.prototype._stateBeforeDeclaration = function(c){
+	this._state = c === "[" ? BEFORE_CDATA_1 :
+					c === "-" ? BEFORE_COMMENT :
+						IN_DECLARATION;
+};
+
+Tokenizer.prototype._stateInDeclaration = function(c){
+	if(c === ">"){
+		this._cbs.ondeclaration(this._getSection());
+		this._state = TEXT;
+		this._sectionStart = this._index + 1;
+	}
+};
+
+Tokenizer.prototype._stateInProcessingInstruction = function(c){
+	if(c === ">"){
+		this._cbs.onprocessinginstruction(this._getSection());
+		this._state = TEXT;
+		this._sectionStart = this._index + 1;
+	}
+};
+
+Tokenizer.prototype._stateBeforeComment = function(c){
+	if(c === "-"){
+		this._state = IN_COMMENT;
+		this._sectionStart = this._index + 1;
+	} else {
+		this._state = IN_DECLARATION;
+	}
+};
+
+Tokenizer.prototype._stateInComment = function(c){
+	if(c === "-") this._state = AFTER_COMMENT_1;
+};
+
+Tokenizer.prototype._stateAfterComment1 = function(c){
+	if(c === "-"){
+		this._state = AFTER_COMMENT_2;
+	} else {
+		this._state = IN_COMMENT;
+	}
+};
+
+Tokenizer.prototype._stateAfterComment2 = function(c){
+	if(c === ">"){
+		//remove 2 trailing chars
+		this._cbs.oncomment(this._buffer.substring(this._sectionStart, this._index - 2));
+		this._state = TEXT;
+		this._sectionStart = this._index + 1;
+	} else if(c !== "-"){
+		this._state = IN_COMMENT;
+	}
+	// else: stay in AFTER_COMMENT_2 (`--->`)
+};
+
+Tokenizer.prototype._stateBeforeCdata1 = ifElseState("C", BEFORE_CDATA_2, IN_DECLARATION);
+Tokenizer.prototype._stateBeforeCdata2 = ifElseState("D", BEFORE_CDATA_3, IN_DECLARATION);
+Tokenizer.prototype._stateBeforeCdata3 = ifElseState("A", BEFORE_CDATA_4, IN_DECLARATION);
+Tokenizer.prototype._stateBeforeCdata4 = ifElseState("T", BEFORE_CDATA_5, IN_DECLARATION);
+Tokenizer.prototype._stateBeforeCdata5 = ifElseState("A", BEFORE_CDATA_6, IN_DECLARATION);
+
+Tokenizer.prototype._stateBeforeCdata6 = function(c){
+	if(c === "["){
+		this._state = IN_CDATA;
+		this._sectionStart = this._index + 1;
+	} else {
+		this._state = IN_DECLARATION;
+		this._index--;
+	}
+};
+
+Tokenizer.prototype._stateInCdata = function(c){
+	if(c === "]") this._state = AFTER_CDATA_1;
+};
+
+Tokenizer.prototype._stateAfterCdata1 = characterState("]", AFTER_CDATA_2);
+
+Tokenizer.prototype._stateAfterCdata2 = function(c){
+	if(c === ">"){
+		//remove 2 trailing chars
+		this._cbs.oncdata(this._buffer.substring(this._sectionStart, this._index - 2));
+		this._state = TEXT;
+		this._sectionStart = this._index + 1;
+	} else if(c !== "]") {
+		this._state = IN_CDATA;
+	}
+	//else: stay in AFTER_CDATA_2 (`]]]>`)
+};
+
+Tokenizer.prototype._stateBeforeSpecial = function(c){
+	if(c === "c" || c === "C"){
+		this._state = BEFORE_SCRIPT_1;
+	} else if(c === "t" || c === "T"){
+		this._state = BEFORE_STYLE_1;
+	} else {
+		this._state = IN_TAG_NAME;
+		this._index--; //consume the token again
+	}
+};
+
+Tokenizer.prototype._stateBeforeSpecialEnd = function(c){
+	if(this._special === SPECIAL_SCRIPT && (c === "c" || c === "C")){
+		this._state = AFTER_SCRIPT_1;
+	} else if(this._special === SPECIAL_STYLE && (c === "t" || c === "T")){
+		this._state = AFTER_STYLE_1;
+	}
+	else this._state = TEXT;
+};
+
+Tokenizer.prototype._stateBeforeScript1 = consumeSpecialNameChar("R", BEFORE_SCRIPT_2);
+Tokenizer.prototype._stateBeforeScript2 = consumeSpecialNameChar("I", BEFORE_SCRIPT_3);
+Tokenizer.prototype._stateBeforeScript3 = consumeSpecialNameChar("P", BEFORE_SCRIPT_4);
+Tokenizer.prototype._stateBeforeScript4 = consumeSpecialNameChar("T", BEFORE_SCRIPT_5);
+
+Tokenizer.prototype._stateBeforeScript5 = function(c){
+	if(c === "/" || c === ">" || whitespace(c)){
+		this._special = SPECIAL_SCRIPT;
+	}
+	this._state = IN_TAG_NAME;
+	this._index--; //consume the token again
+};
+
+Tokenizer.prototype._stateAfterScript1 = ifElseState("R", AFTER_SCRIPT_2, TEXT);
+Tokenizer.prototype._stateAfterScript2 = ifElseState("I", AFTER_SCRIPT_3, TEXT);
+Tokenizer.prototype._stateAfterScript3 = ifElseState("P", AFTER_SCRIPT_4, TEXT);
+Tokenizer.prototype._stateAfterScript4 = ifElseState("T", AFTER_SCRIPT_5, TEXT);
+
+Tokenizer.prototype._stateAfterScript5 = function(c){
+	if(c === ">" || whitespace(c)){
+		this._special = SPECIAL_NONE;
+		this._state = IN_CLOSING_TAG_NAME;
+		this._sectionStart = this._index - 6;
+		this._index--; //reconsume the token
+	}
+	else this._state = TEXT;
+};
+
+Tokenizer.prototype._stateBeforeStyle1 = consumeSpecialNameChar("Y", BEFORE_STYLE_2);
+Tokenizer.prototype._stateBeforeStyle2 = consumeSpecialNameChar("L", BEFORE_STYLE_3);
+Tokenizer.prototype._stateBeforeStyle3 = consumeSpecialNameChar("E", BEFORE_STYLE_4);
+
+Tokenizer.prototype._stateBeforeStyle4 = function(c){
+	if(c === "/" || c === ">" || whitespace(c)){
+		this._special = SPECIAL_STYLE;
+	}
+	this._state = IN_TAG_NAME;
+	this._index--; //consume the token again
+};
+
+Tokenizer.prototype._stateAfterStyle1 = ifElseState("Y", AFTER_STYLE_2, TEXT);
+Tokenizer.prototype._stateAfterStyle2 = ifElseState("L", AFTER_STYLE_3, TEXT);
+Tokenizer.prototype._stateAfterStyle3 = ifElseState("E", AFTER_STYLE_4, TEXT);
+
+Tokenizer.prototype._stateAfterStyle4 = function(c){
+	if(c === ">" || whitespace(c)){
+		this._special = SPECIAL_NONE;
+		this._state = IN_CLOSING_TAG_NAME;
+		this._sectionStart = this._index - 5;
+		this._index--; //reconsume the token
+	}
+	else this._state = TEXT;
+};
+
+Tokenizer.prototype._stateBeforeEntity = ifElseState("#", BEFORE_NUMERIC_ENTITY, IN_NAMED_ENTITY);
+Tokenizer.prototype._stateBeforeNumericEntity = ifElseState("X", IN_HEX_ENTITY, IN_NUMERIC_ENTITY);
+
+//for entities terminated with a semicolon
+Tokenizer.prototype._parseNamedEntityStrict = function(){
+	//offset = 1
+	if(this._sectionStart + 1 < this._index){
+		var entity = this._buffer.substring(this._sectionStart + 1, this._index),
+		    map = this._xmlMode ? xmlMap : entityMap;
+
+		if(map.hasOwnProperty(entity)){
+			this._emitPartial(map[entity]);
+			this._sectionStart = this._index + 1;
+		}
+	}
+};
+
+
+//parses legacy entities (without trailing semicolon)
+Tokenizer.prototype._parseLegacyEntity = function(){
+	var start = this._sectionStart + 1,
+	    limit = this._index - start;
+
+	if(limit > 6) limit = 6; //the max length of legacy entities is 6
+
+	while(limit >= 2){ //the min length of legacy entities is 2
+		var entity = this._buffer.substr(start, limit);
+
+		if(legacyMap.hasOwnProperty(entity)){
+			this._emitPartial(legacyMap[entity]);
+			this._sectionStart += limit + 1;
+			return;
+		} else {
+			limit--;
+		}
+	}
+};
+
+Tokenizer.prototype._stateInNamedEntity = function(c){
+	if(c === ";"){
+		this._parseNamedEntityStrict();
+		if(this._sectionStart + 1 < this._index && !this._xmlMode){
+			this._parseLegacyEntity();
+		}
+		this._state = this._baseState;
+	} else if((c < "a" || c > "z") && (c < "A" || c > "Z") && (c < "0" || c > "9")){
+		if(this._xmlMode);
+		else if(this._sectionStart + 1 === this._index);
+		else if(this._baseState !== TEXT){
+			if(c !== "="){
+				this._parseNamedEntityStrict();
+			}
+		} else {
+			this._parseLegacyEntity();
+		}
+
+		this._state = this._baseState;
+		this._index--;
+	}
+};
+
+Tokenizer.prototype._decodeNumericEntity = function(offset, base){
+	var sectionStart = this._sectionStart + offset;
+
+	if(sectionStart !== this._index){
+		//parse entity
+		var entity = this._buffer.substring(sectionStart, this._index);
+		var parsed = parseInt(entity, base);
+
+		this._emitPartial(decodeCodePoint(parsed));
+		this._sectionStart = this._index;
+	} else {
+		this._sectionStart--;
+	}
+
+	this._state = this._baseState;
+};
+
+Tokenizer.prototype._stateInNumericEntity = function(c){
+	if(c === ";"){
+		this._decodeNumericEntity(2, 10);
+		this._sectionStart++;
+	} else if(c < "0" || c > "9"){
+		if(!this._xmlMode){
+			this._decodeNumericEntity(2, 10);
+		} else {
+			this._state = this._baseState;
+		}
+		this._index--;
+	}
+};
+
+Tokenizer.prototype._stateInHexEntity = function(c){
+	if(c === ";"){
+		this._decodeNumericEntity(3, 16);
+		this._sectionStart++;
+	} else if((c < "a" || c > "f") && (c < "A" || c > "F") && (c < "0" || c > "9")){
+		if(!this._xmlMode){
+			this._decodeNumericEntity(3, 16);
+		} else {
+			this._state = this._baseState;
+		}
+		this._index--;
+	}
+};
+
+Tokenizer.prototype._cleanup = function (){
+	if(this._sectionStart < 0){
+		this._buffer = "";
+		this._bufferOffset += this._index;
+		this._index = 0;
+	} else if(this._running){
+		if(this._state === TEXT){
+			if(this._sectionStart !== this._index){
+				this._cbs.ontext(this._buffer.substr(this._sectionStart));
+			}
+			this._buffer = "";
+			this._bufferOffset += this._index;
+			this._index = 0;
+		} else if(this._sectionStart === this._index){
+			//the section just started
+			this._buffer = "";
+			this._bufferOffset += this._index;
+			this._index = 0;
+		} else {
+			//remove everything unnecessary
+			this._buffer = this._buffer.substr(this._sectionStart);
+			this._index -= this._sectionStart;
+			this._bufferOffset += this._sectionStart;
+		}
+
+		this._sectionStart = 0;
+	}
+};
+
+//TODO make events conditional
+Tokenizer.prototype.write = function(chunk){
+	if(this._ended) this._cbs.onerror(Error(".write() after done!"));
+
+	this._buffer += chunk;
+	this._parse();
+};
+
+Tokenizer.prototype._parse = function(){
+	while(this._index < this._buffer.length && this._running){
+		var c = this._buffer.charAt(this._index);
+		if(this._state === TEXT) {
+			this._stateText(c);
+		} else if(this._state === BEFORE_TAG_NAME){
+			this._stateBeforeTagName(c);
+		} else if(this._state === IN_TAG_NAME) {
+			this._stateInTagName(c);
+		} else if(this._state === BEFORE_CLOSING_TAG_NAME){
+			this._stateBeforeCloseingTagName(c);
+		} else if(this._state === IN_CLOSING_TAG_NAME){
+			this._stateInCloseingTagName(c);
+		} else if(this._state === AFTER_CLOSING_TAG_NAME){
+			this._stateAfterCloseingTagName(c);
+		} else if(this._state === IN_SELF_CLOSING_TAG){
+			this._stateInSelfClosingTag(c);
+		}
+
+		/*
+		*	attributes
+		*/
+		else if(this._state === BEFORE_ATTRIBUTE_NAME){
+			this._stateBeforeAttributeName(c);
+		} else if(this._state === IN_ATTRIBUTE_NAME){
+			this._stateInAttributeName(c);
+		} else if(this._state === AFTER_ATTRIBUTE_NAME){
+			this._stateAfterAttributeName(c);
+		} else if(this._state === BEFORE_ATTRIBUTE_VALUE){
+			this._stateBeforeAttributeValue(c);
+		} else if(this._state === IN_ATTRIBUTE_VALUE_DQ){
+			this._stateInAttributeValueDoubleQuotes(c);
+		} else if(this._state === IN_ATTRIBUTE_VALUE_SQ){
+			this._stateInAttributeValueSingleQuotes(c);
+		} else if(this._state === IN_ATTRIBUTE_VALUE_NQ){
+			this._stateInAttributeValueNoQuotes(c);
+		}
+
+		/*
+		*	declarations
+		*/
+		else if(this._state === BEFORE_DECLARATION){
+			this._stateBeforeDeclaration(c);
+		} else if(this._state === IN_DECLARATION){
+			this._stateInDeclaration(c);
+		}
+
+		/*
+		*	processing instructions
+		*/
+		else if(this._state === IN_PROCESSING_INSTRUCTION){
+			this._stateInProcessingInstruction(c);
+		}
+
+		/*
+		*	comments
+		*/
+		else if(this._state === BEFORE_COMMENT){
+			this._stateBeforeComment(c);
+		} else if(this._state === IN_COMMENT){
+			this._stateInComment(c);
+		} else if(this._state === AFTER_COMMENT_1){
+			this._stateAfterComment1(c);
+		} else if(this._state === AFTER_COMMENT_2){
+			this._stateAfterComment2(c);
+		}
+
+		/*
+		*	cdata
+		*/
+		else if(this._state === BEFORE_CDATA_1){
+			this._stateBeforeCdata1(c);
+		} else if(this._state === BEFORE_CDATA_2){
+			this._stateBeforeCdata2(c);
+		} else if(this._state === BEFORE_CDATA_3){
+			this._stateBeforeCdata3(c);
+		} else if(this._state === BEFORE_CDATA_4){
+			this._stateBeforeCdata4(c);
+		} else if(this._state === BEFORE_CDATA_5){
+			this._stateBeforeCdata5(c);
+		} else if(this._state === BEFORE_CDATA_6){
+			this._stateBeforeCdata6(c);
+		} else if(this._state === IN_CDATA){
+			this._stateInCdata(c);
+		} else if(this._state === AFTER_CDATA_1){
+			this._stateAfterCdata1(c);
+		} else if(this._state === AFTER_CDATA_2){
+			this._stateAfterCdata2(c);
+		}
+
+		/*
+		* special tags
+		*/
+		else if(this._state === BEFORE_SPECIAL){
+			this._stateBeforeSpecial(c);
+		} else if(this._state === BEFORE_SPECIAL_END){
+			this._stateBeforeSpecialEnd(c);
+		}
+
+		/*
+		* script
+		*/
+		else if(this._state === BEFORE_SCRIPT_1){
+			this._stateBeforeScript1(c);
+		} else if(this._state === BEFORE_SCRIPT_2){
+			this._stateBeforeScript2(c);
+		} else if(this._state === BEFORE_SCRIPT_3){
+			this._stateBeforeScript3(c);
+		} else if(this._state === BEFORE_SCRIPT_4){
+			this._stateBeforeScript4(c);
+		} else if(this._state === BEFORE_SCRIPT_5){
+			this._stateBeforeScript5(c);
+		}
+
+		else if(this._state === AFTER_SCRIPT_1){
+			this._stateAfterScript1(c);
+		} else if(this._state === AFTER_SCRIPT_2){
+			this._stateAfterScript2(c);
+		} else if(this._state === AFTER_SCRIPT_3){
+			this._stateAfterScript3(c);
+		} else if(this._state === AFTER_SCRIPT_4){
+			this._stateAfterScript4(c);
+		} else if(this._state === AFTER_SCRIPT_5){
+			this._stateAfterScript5(c);
+		}
+
+		/*
+		* style
+		*/
+		else if(this._state === BEFORE_STYLE_1){
+			this._stateBeforeStyle1(c);
+		} else if(this._state === BEFORE_STYLE_2){
+			this._stateBeforeStyle2(c);
+		} else if(this._state === BEFORE_STYLE_3){
+			this._stateBeforeStyle3(c);
+		} else if(this._state === BEFORE_STYLE_4){
+			this._stateBeforeStyle4(c);
+		}
+
+		else if(this._state === AFTER_STYLE_1){
+			this._stateAfterStyle1(c);
+		} else if(this._state === AFTER_STYLE_2){
+			this._stateAfterStyle2(c);
+		} else if(this._state === AFTER_STYLE_3){
+			this._stateAfterStyle3(c);
+		} else if(this._state === AFTER_STYLE_4){
+			this._stateAfterStyle4(c);
+		}
+
+		/*
+		* entities
+		*/
+		else if(this._state === BEFORE_ENTITY){
+			this._stateBeforeEntity(c);
+		} else if(this._state === BEFORE_NUMERIC_ENTITY){
+			this._stateBeforeNumericEntity(c);
+		} else if(this._state === IN_NAMED_ENTITY){
+			this._stateInNamedEntity(c);
+		} else if(this._state === IN_NUMERIC_ENTITY){
+			this._stateInNumericEntity(c);
+		} else if(this._state === IN_HEX_ENTITY){
+			this._stateInHexEntity(c);
+		}
+
+		else {
+			this._cbs.onerror(Error("unknown _state"), this._state);
+		}
+
+		this._index++;
+	}
+
+	this._cleanup();
+};
+
+Tokenizer.prototype.pause = function(){
+	this._running = false;
+};
+Tokenizer.prototype.resume = function(){
+	this._running = true;
+
+	if(this._index < this._buffer.length){
+		this._parse();
+	}
+	if(this._ended){
+		this._finish();
+	}
+};
+
+Tokenizer.prototype.end = function(chunk){
+	if(this._ended) this._cbs.onerror(Error(".end() after done!"));
+	if(chunk) this.write(chunk);
+
+	this._ended = true;
+
+	if(this._running) this._finish();
+};
+
+Tokenizer.prototype._finish = function(){
+	//if there is remaining data, emit it in a reasonable way
+	if(this._sectionStart < this._index){
+		this._handleTrailingData();
+	}
+
+	this._cbs.onend();
+};
+
+Tokenizer.prototype._handleTrailingData = function(){
+	var data = this._buffer.substr(this._sectionStart);
+
+	if(this._state === IN_CDATA || this._state === AFTER_CDATA_1 || this._state === AFTER_CDATA_2){
+		this._cbs.oncdata(data);
+	} else if(this._state === IN_COMMENT || this._state === AFTER_COMMENT_1 || this._state === AFTER_COMMENT_2){
+		this._cbs.oncomment(data);
+	} else if(this._state === IN_NAMED_ENTITY && !this._xmlMode){
+		this._parseLegacyEntity();
+		if(this._sectionStart < this._index){
+			this._state = this._baseState;
+			this._handleTrailingData();
+		}
+	} else if(this._state === IN_NUMERIC_ENTITY && !this._xmlMode){
+		this._decodeNumericEntity(2, 10);
+		if(this._sectionStart < this._index){
+			this._state = this._baseState;
+			this._handleTrailingData();
+		}
+	} else if(this._state === IN_HEX_ENTITY && !this._xmlMode){
+		this._decodeNumericEntity(3, 16);
+		if(this._sectionStart < this._index){
+			this._state = this._baseState;
+			this._handleTrailingData();
+		}
+	} else if(
+		this._state !== IN_TAG_NAME &&
+		this._state !== BEFORE_ATTRIBUTE_NAME &&
+		this._state !== BEFORE_ATTRIBUTE_VALUE &&
+		this._state !== AFTER_ATTRIBUTE_NAME &&
+		this._state !== IN_ATTRIBUTE_NAME &&
+		this._state !== IN_ATTRIBUTE_VALUE_SQ &&
+		this._state !== IN_ATTRIBUTE_VALUE_DQ &&
+		this._state !== IN_ATTRIBUTE_VALUE_NQ &&
+		this._state !== IN_CLOSING_TAG_NAME
+	){
+		this._cbs.ontext(data);
+	}
+	//else, ignore remaining data
+	//TODO add a way to remove current tag
+};
+
+Tokenizer.prototype.reset = function(){
+	Tokenizer.call(this, {xmlMode: this._xmlMode, decodeEntities: this._decodeEntities}, this._cbs);
+};
+
+Tokenizer.prototype.getAbsoluteIndex = function(){
+	return this._bufferOffset + this._index;
+};
+
+Tokenizer.prototype._getSection = function(){
+	return this._buffer.substring(this._sectionStart, this._index);
+};
+
+Tokenizer.prototype._emitToken = function(name){
+	this._cbs[name](this._getSection());
+	this._sectionStart = -1;
+};
+
+Tokenizer.prototype._emitPartial = function(value){
+	if(this._baseState !== TEXT){
+		this._cbs.onattribdata(value); //TODO implement the new event
+	} else {
+		this._cbs.ontext(value);
+	}
+};
+
+},{"entities/lib/decode_codepoint.js":2,"entities/maps/entities.json":1,"entities/maps/legacy.json":4,"entities/maps/xml.json":1}],8:[function(require,module,exports){
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+},{}],9:[function(require,module,exports){
 (function (process){
 // Generated by CoffeeScript 1.12.2
 (function() {
@@ -351,7 +1664,7 @@ if ('undefined' !== typeof module) {
 
 
 }).call(this,require('_process'))
-},{"_process":3}],3:[function(require,module,exports){
+},{"_process":10}],10:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -537,7 +1850,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],4:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 (function (process,global){
 (function(c){function l(a){return a?"object"==typeof a||"function"==typeof a:!1}if(!c.Proxy){var m=null;c.a=function(a,b){function c(){}if(!l(a)||!l(b))throw new TypeError("Cannot create proxy with a non-object as target or handler");m=function(){c=function(a){throw new TypeError("Cannot perform '"+a+"' on a proxy that has been revoked");}};var e=b;b={get:null,set:null,apply:null,construct:null};for(var h in e){if(!(h in b))throw new TypeError("Proxy polyfill does not support trap '"+h+"'");b[h]=
 e[h]}"function"==typeof e&&(b.apply=e.apply.bind(e));var d=this,n=!1,p="function"==typeof a;if(b.apply||b.construct||p)d=function(){var g=this&&this.constructor===d,f=Array.prototype.slice.call(arguments);c(g?"construct":"apply");if(g&&b.construct)return b.construct.call(this,a,f);if(!g&&b.apply)return b.apply(a,this,f);if(p)return g?(f.unshift(a),new (a.bind.apply(a,f))):a.apply(this,f);throw new TypeError(g?"not a constructor":"not a function");},n=!0;var q=b.get?function(a){c("get");return b.get(this,
@@ -545,7 +1858,7 @@ a,d)}:function(a){c("get");return this[a]},t=b.set?function(a,f){c("set");b.set(
 k,{get:q.bind(a,k)});Object.seal(a);Object.seal(d);return d};c.a.b=function(a,b){return{proxy:new c.a(a,b),revoke:m}};c.a.revocable=c.a.b;c.Proxy=c.a}})("undefined"!==typeof process&&"[object process]"=={}.toString.call(process)?global:self);
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":3}],5:[function(require,module,exports){
+},{"_process":10}],12:[function(require,module,exports){
 (function (global){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -621,7 +1934,7 @@ module.exports.polyfill = function() {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"performance-now":2}],6:[function(require,module,exports){
+},{"performance-now":9}],13:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -681,7 +1994,7 @@ exports.h = h;
 ;
 exports.default = h;
 
-},{"./is":8,"./vnode":15}],7:[function(require,module,exports){
+},{"./is":15,"./vnode":22}],14:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function createElement(tagName) {
@@ -748,7 +2061,7 @@ exports.htmlDomApi = {
 };
 exports.default = exports.htmlDomApi;
 
-},{}],8:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.array = Array.isArray;
@@ -757,7 +2070,7 @@ function primitive(s) {
 }
 exports.primitive = primitive;
 
-},{}],9:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var booleanAttrs = ["allowfullscreen", "async", "autofocus", "autoplay", "checked", "compact", "controls", "declare",
@@ -825,7 +2138,7 @@ function updateAttrs(oldVnode, vnode) {
 exports.attributesModule = { create: updateAttrs, update: updateAttrs };
 exports.default = exports.attributesModule;
 
-},{}],10:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function updateClass(oldVnode, vnode) {
@@ -851,7 +2164,7 @@ function updateClass(oldVnode, vnode) {
 exports.classModule = { create: updateClass, update: updateClass };
 exports.default = exports.classModule;
 
-},{}],11:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function invokeHandler(handler, vnode, event) {
@@ -947,7 +2260,7 @@ exports.eventListenersModule = {
 };
 exports.default = exports.eventListenersModule;
 
-},{}],12:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function updateProps(oldVnode, vnode) {
@@ -974,7 +2287,7 @@ function updateProps(oldVnode, vnode) {
 exports.propsModule = { create: updateProps, update: updateProps };
 exports.default = exports.propsModule;
 
-},{}],13:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var vnode_1 = require("./vnode");
@@ -1282,7 +2595,7 @@ function init(modules, domApi) {
 }
 exports.init = init;
 
-},{"./h":6,"./htmldomapi":7,"./is":8,"./thunk":14,"./vnode":15}],14:[function(require,module,exports){
+},{"./h":13,"./htmldomapi":14,"./is":15,"./thunk":21,"./vnode":22}],21:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 var h_1 = require("./h");
@@ -1330,7 +2643,7 @@ exports.thunk = function thunk(sel, key, fn, args) {
 };
 exports.default = exports.thunk;
 
-},{"./h":6}],15:[function(require,module,exports){
+},{"./h":13}],22:[function(require,module,exports){
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function vnode(sel, data, children, text, elm) {
@@ -1341,7 +2654,7 @@ function vnode(sel, data, children, text, elm) {
 exports.vnode = vnode;
 exports.default = vnode;
 
-},{}],16:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1566,21 +2879,24 @@ function equal(left, right) {
     return left === right;
 }
 
-},{"./private":21}],17:[function(require,module,exports){
+},{"./private":28}],24:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var patch = require('snabbdom').init([require('snabbdom/modules/class').default, require('snabbdom/modules/props').default, require('snabbdom/modules/attributes').default, require('snabbdom/modules/eventlisteners').default]);
 
-var EventEmitter = require('eventemitter3');
+var EventEmitter = require('events').EventEmitter;
 
 require('./polyfill');
 
 var Template = require('./template');
 var Observer = require('./observer');
-var parser = require('./parser');
+// const parser = require('./parser');
+var parser2 = require('./parser2');
+
 var _private = require('./private');
+var _ = require('./utils');
 
 var HIDDEN = ['hidden', 'mozHidden', 'webkitHidden'];
 
@@ -1624,7 +2940,15 @@ var WebScript = function () {
 
         _this.isOnVisibilityChange = false;
 
-        _this.template = new Template(element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>'));
+        var html = element.outerHTML.replace(/&lt;/ig, '<').replace(/&gt;/ig, '>');
+
+        // 是否压缩代码
+        var removeHTMLWhitespace = _.getObject(options, 'config.removeHTMLWhitespace', true);
+        if (removeHTMLWhitespace) {
+            html = html.replace(/([a-z%]>|\s%>)\s+(<[a-z]|<%\s)/igm, '$1$2');
+        }
+
+        _this.template = new Template(html);
         var observer = _this.observer = new Observer(options.data || {});
 
         observer.attach(function () {
@@ -1656,16 +2980,22 @@ var WebScript = function () {
         var $this = this;
         var _this = _private($this);
 
-        if (_this.frame) {
+        if (_this.isRenderPending) {
             return;
         }
 
-        _this.frame = requestAnimationFrame(function () {
+        _this.isRenderPending = true;
+
+        _.nextTick(function renderNextTick() {
             var data = _this.observer.target;
 
             var html = _this.template.render(data);
 
-            var vnodeTemp = parser.call($this, html);
+            var vnodeTemp = void 0;
+
+            // vnodeTemp = parser.call($this, html);
+
+            vnodeTemp = parser2.call($this, html);
 
             patch(_this.vnode || $this.element, vnodeTemp);
 
@@ -1673,17 +3003,32 @@ var WebScript = function () {
 
             vnodeTemp = null;
 
-            _this.frame = null;
+            _this.isRenderPending = false;
+
+            _this.emitter.emit('render');
         });
     };
 
     WebScript.prototype.on = function on(event, listener) {
-        _private(this).emitter.addListener(event, listener);
-        return this;
+        var $this = this;
+        _private($this).emitter.addListener(event, function () {
+            listener.apply($this, arguments);
+        });
+        return $this;
     };
 
     WebScript.prototype.off = function off(event, listener) {
         _private(this).emitter.removeListener(event, listener);
+    };
+
+    WebScript.prototype.emit = function emit(event) {
+        var _private$emitter;
+
+        for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+            args[_key - 1] = arguments[_key];
+        }
+
+        (_private$emitter = _private(this).emitter).emit.apply(_private$emitter, [event].concat(args));
     };
 
     return WebScript;
@@ -1691,24 +3036,24 @@ var WebScript = function () {
 
 window.WebScript = WebScript;
 
-},{"./observer":18,"./parser":19,"./polyfill":20,"./private":21,"./template":22,"eventemitter3":1,"snabbdom":13,"snabbdom/modules/attributes":9,"snabbdom/modules/class":10,"snabbdom/modules/eventlisteners":11,"snabbdom/modules/props":12}],18:[function(require,module,exports){
+},{"./observer":25,"./parser2":26,"./polyfill":27,"./private":28,"./template":29,"./utils":30,"events":5,"snabbdom":20,"snabbdom/modules/attributes":16,"snabbdom/modules/class":17,"snabbdom/modules/eventlisteners":18,"snabbdom/modules/props":19}],25:[function(require,module,exports){
 (function (global){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventEmitter = require('eventemitter3');
+var EventEmitter = require('events').EventEmitter;
 
 var METHODS = ['fill', 'push', 'pop', 'reverse', 'shift', 'splice', 'sort', 'unshift'];
 var EVENT_DATA_CHANGE = 'datachange';
 
-var isSupportProxy = !!(global || self).Proxy;
+var IS_SUPPORT_PROXY = !!(global || self).Proxy;
 
-if (!isSupportProxy) {
+if (!IS_SUPPORT_PROXY) {
     require('proxy-polyfill/proxy.min');
 }
 
-var utils = require('./utils');
+var _ = require('./utils');
 
 var _private = require('./private');
 
@@ -1730,7 +3075,7 @@ var Observer = function () {
             }
         };
 
-        if (isSupportProxy) {
+        if (IS_SUPPORT_PROXY) {
             handler['deleteProperty'] = function (target, property) {
                 delete target[property];
                 notify.call(_this);
@@ -1763,12 +3108,15 @@ var Observer = function () {
 
 function notify(target, property, value) {
     var _this = this;
-    if (!_this.timer) {
-        _this.timer = setTimeout(function () {
-            _this.timer = null;
-            _this.emitter.emit(EVENT_DATA_CHANGE, target, property, value);
-        }, 0);
+    if (_this.isNotifyPending) {
+        return;
     }
+
+    _this.isNotifyPending = true;
+    _.nextTick(function () {
+        _this.isNotifyPending = false;
+        _this.emitter.emit(EVENT_DATA_CHANGE, target, property, value);
+    });
 }
 
 module.exports = Observer;
@@ -1780,9 +3128,9 @@ module.exports = Observer;
  * @returns {*}
  */
 function proxy(target, handler) {
-    if (utils.isArray(target)) {
+    if (_.isArray(target)) {
         target = proxyArray(target, handler);
-    } else if (utils.isObject(target)) {
+    } else if (_.isObject(target)) {
         target = proxyObject(target, handler);
     }
 
@@ -1810,13 +3158,13 @@ function proxyObject(obj, handler) {
  */
 function proxyArray(array, handler) {
     array.forEach(function (value, index) {
-        if (utils.isObject(value)) {
+        if (_.isObject(value)) {
             array[index] = new Proxy(value, handler);
         }
     });
-    if (isSupportProxy) {
+    if (IS_SUPPORT_PROXY) {
         array.forEach(function (value, index) {
-            if (utils.isObject(value)) {
+            if (_.isObject(value)) {
                 array[index] = new Proxy(value, handler);
             }
         });
@@ -1837,148 +3185,112 @@ function proxyArray(array, handler) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./private":21,"./utils":23,"eventemitter3":1,"proxy-polyfill/proxy.min":4}],19:[function(require,module,exports){
+},{"./private":28,"./utils":30,"events":5,"proxy-polyfill/proxy.min":11}],26:[function(require,module,exports){
 'use strict';
 
 var h = require('snabbdom/h').default;
+var Parser = require('htmlparser2/lib/Parser');
 
 var _ = require('./utils');
-var _private = require('./private');
 
-var domParser = new DOMParser();
+var $this = void 0;
+var element = void 0;
 
-function parseFromString(string) {
-    var doc = domParser.parseFromString(string, 'text/html');
-    return doc.body.firstChild;
-}
+var parser = new Parser({
+    onopentag: function onopentag(tagName, attributes) {
+        tagName = tagName.toUpperCase();
 
-function parseDOM(dom) {
-    var $this = this;
+        element = {
+            selector: tagName,
+            data: {
+                attrs: {},
+                props: {},
+                on: {}
+            },
+            childrens: [],
+            parent: element
+        };
 
-    var tagName = dom.tagName,
-        selector = tagName,
-        hData = {
-        attrs: {},
-        props: {},
-        on: {}
+        var _loop = function _loop(attrName) {
+            var attrValue = attributes[attrName];
+
+            var eventMatch = /^on-([a-z].*)/i.exec(attrName);
+
+            // Event
+            if (eventMatch) {
+                var eventName = eventMatch[1];
+                element.data.on[eventName] = _.getObject($this.data, attrValue, function () {}).bind($this);
+            }
+            // Attr
+            else {
+                    switch (attrName) {
+                        case 'id':
+                            element.selector += '#' + attrValue.trim();
+                            break;
+
+                        case 'class':
+                            var className = attrValue.trim();
+                            if (className) {
+                                element.selector += '.' + className.replace(/\s+/, '.');
+                            }
+                            break;
+
+                        case 'bind':
+                            if (tagName == 'INPUT' && attributes.type == 'radio') {
+                                data.props.checked = attributes.value == _.getObject($this.data, attrValue);
+                                data.on.change = function (event) {
+                                    console.log(event.target);
+                                    _.setObject($this.data, attrValue, event.target.value);
+                                };
+                            } else if (tagName == 'INPUT' && attributes.type == 'checkbox') {
+                                data.props.checked = attributes.value == _.getObject($this.data, attrValue);
+                                data.on.change = function (event) {
+                                    _.setObject($this.data, attrValue, event.target.checked);
+                                };
+                            } else {
+                                data.props.value = _.getObject($this.data, attrValue);
+                                data.on.input = data.on.change = function (event) {
+                                    _.setObject($this.data, attrValue, event.target.value);
+                                };
+                            }
+                            break;
+
+                        default:
+                            element.data.attrs[attrName] = attrValue;
+                    }
+                }
+        };
+
+        for (var attrName in attributes) {
+            _loop(attrName);
+        }
     },
-        children = [];
 
-    if (dom.id) {
-        selector += '#' + dom.id;
+    ontext: function ontext(text) {
+        element.childrens.push(text);
+    },
+
+    onclosetag: function onclosetag() {
+        element.parent.childrens.push(h(element.selector, element.data, element.childrens));
+        element = element.parent;
     }
-    if (dom.className) {
-        selector += '.' + dom.className.trim().replace(/\s+/, '.');
-    }
+});
 
-    // 解析属性
-    var attributes = dom.attributes;
+function parseHTML(html) {
+    element = {
+        childrens: []
+    };
 
-    var i = void 0,
-        length = void 0;
+    $this = this;
 
-    for (i = 0, length = attributes.length; i < length; i++) {
-        (function (name, value) {
-            var eventMatch = /^on-([a-z].*)/i.exec(name);
-            var bindMatch = /^::(.*)/.exec(value);
-            // Var Bind
-            if (name == "name" && bindMatch && (tagName == "INPUT" || tagName == "TEXTAREA" || tagName == "SELECT")) {
-                value = bindMatch[1];
-                if (dom.type == 'radio') {
-                    hData.attrs.name = value;
-                    hData.props.checked = dom.value == _.getObject($this.data, value);
-                    hData.on.change = function (event) {
-                        _.setObject($this.data, value, event.target.value);
-                    };
-                } else if (dom.type == 'checkbox') {
-                    hData.props.checked = _.getObject($this.data, value);
-                    hData.on.change = function (event) {
-                        _.setObject($this.data, value, event.target.checked);
-                    };
-                } else {
-                    hData.props.value = _.getObject($this.data, value);
-                    hData.on.input = hData.on.change = function (event) {
-                        _.setObject($this.data, value, event.target.value);
-                    };
-                }
-            } else if (eventMatch) {
-                hData.on[eventMatch[1]] = _.getObject($this.data, value, function () {}).bind($this);
-            } else if (name != 'id' && name != 'class') {
-                hData.attrs[_.toCamelCase(name)] = value;
-            }
-        })(attributes[i].name, attributes[i].value);
-    }
+    parser.write(html);
 
-    for (i = 0, length = dom.childNodes.length; i < length; i++) {
-        var child = dom.childNodes[i];
-        if (child.nodeType == Node.TEXT_NODE) {
-            children.push(child.textContent);
-        } else {
-            children.push(parseDOM.call(this, child));
-        }
-    }
-
-    return h(selector, hData, children);
+    return element.childrens[0];
 }
 
-module.exports = function (html) {
-    var dom = parseFromString(html);
-    console.log(this);
+module.exports = parseHTML;
 
-    /* Class */
-    parseSelector.apply(this, [dom, _private(this).classes, function (element, name, value) {
-        if (value) {
-            element.classList.add(name);
-        }
-    }]);
-
-    /* Style */
-    parseSelector.apply(this, [dom, _private(this).style, function (element, name, value) {
-        element.style[name] = value;
-    }]);
-
-    /* Attr */
-    parseSelector.apply(this, [dom, _private(this).attrs, function (element, name, value) {
-        if (value || !/^hidden|disabled$/i.test(name)) {
-            element.setAttribute(name, value);
-        }
-    }]);
-
-    /* Prop */
-    parseSelector.apply(this, [dom, _private(this).props, function (element, name, value) {
-        element[name] = value;
-    }]);
-
-    return parseDOM.call(this, dom);
-};
-
-function parseSelector(dom, selectores, handler) {
-    var _this = this;
-
-    for (var selector in selectores) {
-        var elementList = dom.querySelectorAll(selector);
-
-        if (elementList.length > 0) {
-            var _loop = function _loop(name) {
-                var value = selectores[selector][name];
-
-                if (_.isFunction(value)) {
-                    value = value.call(_this);
-                }
-
-                _.each(elementList, function (element) {
-                    handler.apply(this, [element, name, value]);
-                });
-            };
-
-            for (var name in selectores[selector]) {
-                _loop(name);
-            }
-        }
-    }
-}
-
-},{"./private":21,"./utils":23,"snabbdom/h":6}],20:[function(require,module,exports){
+},{"./utils":30,"htmlparser2/lib/Parser":6,"snabbdom/h":13}],27:[function(require,module,exports){
 (function (global){
 "use strict";
 
@@ -2112,7 +3424,7 @@ if (!self.WeakMap) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"raf":5}],21:[function(require,module,exports){
+},{"raf":12}],28:[function(require,module,exports){
 "use strict";
 
 /**********************
@@ -2137,7 +3449,7 @@ function _private(thisArg) {
 
 module.exports = _private;
 
-},{}],22:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 'use strict';
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2170,8 +3482,10 @@ var Template = function () {
 
 module.exports = Template;
 
-},{"./compiler":16}],23:[function(require,module,exports){
+},{"./compiler":23}],30:[function(require,module,exports){
 'use strict';
+
+function emptyFunction() {}
 
 function isType(value, type) {
     return Object.prototype.toString.call(value) === '[object ' + type + ']';
@@ -2191,6 +3505,10 @@ function isObject(object) {
 
 function isFunction(fn) {
     return isType(fn, 'Function');
+}
+
+function toString(value) {
+    return '' + value;
 }
 
 function each(list, fn) {
@@ -2241,6 +3559,50 @@ function toCamelCase(name) {
     });
 }
 
+/**
+ * Checks if `value` is a native code.
+ *
+ * @param object
+ * @returns {boolean}
+ */
+function isNative(object) {
+    return isFunction(object) && /native code/.test(object.toString());
+}
+
+/**
+ * Implement like nodejs process.nextTick
+ *
+ * @param {function} callback
+ * @return {undefined}
+ */
+var nextTick = function () {
+    if (typeof Promise !== 'undefined' && isNative(Promise)) {
+        return function (callback) {
+            Promise.resolve().then(callback);
+        };
+    } else if (typeof MutationObserver !== 'undefined' && isNative(MutationObserver)) {
+        var counter = 1;
+        var textNode = document.createTextNode(toString(counter));
+        var mutationCallback = emptyFunction;
+
+        var mutationObserver = new MutationObserver(function () {
+            mutationCallback();
+        });
+        mutationObserver.observe(textNode, {
+            characterData: true
+        });
+
+        return function (callback) {
+            mutationCallback = isFunction(callback) ? callback : emptyFunction;
+            textNode.data = (counter + 1) % 2;
+        };
+    } else {
+        return function (callback) {
+            setTimeout(callback, 0);
+        };
+    }
+}();
+
 module.exports = {
     isString: isString,
     isArray: isArray,
@@ -2249,7 +3611,8 @@ module.exports = {
     each: each,
     getObject: getObject,
     setObject: setObject,
-    toCamelCase: toCamelCase
+    toCamelCase: toCamelCase,
+    nextTick: nextTick
 };
 
-},{}]},{},[17]);
+},{}]},{},[24]);

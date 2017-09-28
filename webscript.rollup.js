@@ -1,3 +1,6 @@
+(function () {
+'use strict';
+
 const patch = require('snabbdom').init([
     require('snabbdom/modules/class').default,
     require('snabbdom/modules/props').default,
@@ -43,7 +46,7 @@ class WebScript {
 
         let element;
         if('root' in options) {
-            element = options.root
+            element = options.root;
         }
         else {
             element = document.body.children[0];
@@ -145,3 +148,5 @@ class WebScript {
 }
 
 window.WebScript = WebScript;
+
+}());
