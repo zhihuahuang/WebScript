@@ -47,21 +47,21 @@ let parser = new Parser({
 
                     case 'bind':
                         if (tagName == 'INPUT' && attributes.type == 'radio') {
-                            data.props.checked = (attributes.value == _.getObject($this.data, attrValue));
-                            data.on.change = function (event) {
+                            element.data.props.checked = (attributes.value == _.getObject($this.data, attrValue));
+                            element.data.on.change = function (event) {
                                 console.log(event.target);
                                 _.setObject($this.data, attrValue, event.target.value);
                             };
                         }
                         else if (tagName == 'INPUT' && attributes.type == 'checkbox') {
-                            data.props.checked = (attributes.value == _.getObject($this.data, attrValue));
-                            data.on.change = function (event) {
+                            element.data.props.checked = (attributes.value == _.getObject($this.data, attrValue));
+                            element.data.on.change = function (event) {
                                 _.setObject($this.data, attrValue, event.target.checked);
                             };
                         }
                         else {
-                            data.props.value = _.getObject($this.data, attrValue);
-                            data.on.input = data.on.change = function (event) {
+                            element.data.props.value = _.getObject($this.data, attrValue);
+                            element.data.on.input = element.data.on.change = function (event) {
                                 _.setObject($this.data, attrValue, event.target.value);
                             };
                         }
@@ -92,6 +92,12 @@ function parseHTML(html) {
     $this = this;
 
     parser.write(html);
+
+    //// GCC
+    //setTimeout(function parserGCC() {
+    //    element = null;
+    //    parser.reset();
+    //}, 100);
 
     return element.childrens[0];
 }
