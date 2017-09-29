@@ -82,6 +82,8 @@ let parser = new Parser({
         element.parent.childrens.push(h(element.selector, element.data, element.childrens));
         element = element.parent;
     }
+}, {
+    lowerCaseTags: false
 });
 
 function parseHTML(html) {
@@ -92,12 +94,6 @@ function parseHTML(html) {
     $this = this;
 
     parser.write(html);
-
-    //// GCC
-    //setTimeout(function parserGCC() {
-    //    element = null;
-    //    parser.reset();
-    //}, 100);
 
     return element.childrens[0];
 }
