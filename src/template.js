@@ -12,10 +12,13 @@ class Template {
     }
 
     render(data) {
-        let fn = () => '';
-        let code = `fn=function(${Object.keys(data).join(',')}){${this.code}}`;
-        eval(code);
-        return fn.apply(this, Object.values(data));
+        let evalCode = function () { return '' };
+        let code = `evalCode=function(${Object.keys(data).join(',')}){${this.code}}`;
+        try {
+            eval(code);
+        }
+        catch (e) {}
+        return evalCode.apply(this, Object.values(data));
     }
 
 }

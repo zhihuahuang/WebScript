@@ -11,8 +11,7 @@ require('./polyfill');
 
 const Template = require('./template');
 const Observer = require('./observer');
-// const parser = require('./parser');
-const parser2 = require('./parser2');
+const parser2 = require('./parser2'); // 使用 htmlparser2
 
 const _private = require('./private');
 const _ = require('./utils');
@@ -86,12 +85,12 @@ class WebScript {
             }
         });
 
-        $this.render();
-
         _this.emitter = new EventEmitter;
 
         $this.element = element;
         $this.data = observer.target;
+
+        $this.render();
     }
 
     render() {
@@ -104,16 +103,16 @@ class WebScript {
 
         _this.isRenderPending = true;
 
-        _.nextTick(function renderNextTick() {
+        //_.nextTick(function renderNextTick() {
             let data = _this.observer.target;
 
             let html = _this.template.render(data);
 
-            let vnodeTemp;
+            data = null;
 
-            // vnodeTemp = parser.call($this, html);
+            let vnodeTemp = parser2.call($this, html);
 
-            vnodeTemp = parser2.call($this, html);
+            html = null;
 
             patch(_this.vnode || $this.element, vnodeTemp);
 
@@ -124,7 +123,7 @@ class WebScript {
             _this.isRenderPending = false;
 
             _this.emitter.emit('render');
-        });
+        //});
     }
 
     on(event, listener) {
