@@ -5,7 +5,7 @@
 const h = require('snabbdom/h').default;
 const Parser = require('htmlparser2/lib/Parser');
 
-const _ = require('./utils');
+const _ = require('./../utils/utils');
 
 let $this;
 let element;

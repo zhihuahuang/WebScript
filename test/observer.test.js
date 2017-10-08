@@ -2,7 +2,7 @@ const assert = require('assert');
 
 delete global.Proxy;
 
-const Observer = require('../src/observer');
+const Observer = require('../src/observer/observer');
 
 describe('Observer', function () {
 

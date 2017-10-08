@@ -7,14 +7,14 @@ const patch = require('snabbdom').init([
 
 const EventEmitter = require('events').EventEmitter;
 
-require('./polyfill');
+require('./utils/polyfill');
 
-const Template = require('./template');
-const Observer = require('./observer');
-const parser2 = require('./parser2'); // 使用 htmlparser2
+const Template = require('./template/template');
+const Observer = require('./observer/observer');
+const parser2 = require('./parser/html_parser'); // 使用 htmlparser2
 
-const _private = require('./private');
-const _ = require('./utils');
+const _private = require('./utils/private');
+const _ = require('./utils/utils');
 
 const HIDDEN = ['hidden', 'mozHidden', 'webkitHidden'];
 
@@ -40,12 +40,32 @@ class WebScript {
         let $this = this;
         let _this = _private(this);
 
-        let element;
-        if('root' in options) {
-            element = options.root
+        let element = options.element;
+        if (!element) {
+            let componentName = options.name;
+            if (componentName) {
+                element = document.querySelector(componentName);
+                if (element) {
+                    let div = document.createElement('div');
+
+                    Array.prototype.forEach.call(element.attributes, function (attr) {
+                        div.setAttribute(attr.name, attr.value);
+                    });
+                    div.setAttribute('data-component-name', componentName);
+                    div.innerHTML = element.innerHTML;
+
+                    element.parentNode.insertBefore(div, element);
+                    element.parentNode.removeChild(element);
+
+                    element = div;
+                }
+            }
+            else {
+                element = document.body.children[0];
+            }
         }
-        else {
-            element = document.body.children[0];
+        else if(_.isString(element)) {
+            element = document.querySelector(element)
         }
 
         _this.classes = options.classes || {};

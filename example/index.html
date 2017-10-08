@@ -8,7 +8,8 @@
     <title>WebScript - Demo</title>
 </head>
 <body>
-    <div>
+    <h1>Webscript Demo</h1>
+    <view class="app">
         <p>TimeStamp: ${time}</p>
         <hr>
         <%
@@ -33,41 +34,48 @@
         <button on-click="pushItem">Push a item</button>
         <button on-click="shiftItem">Shift a item</button>
         <hr>
+        <!-- Text -->
         <div>
-            <input type="text" name="::text">
+            <h2>Text</h2>
+            <input type="text" name="text" bind="text">
             Text: ${text}
-        </div>
-        <div>
-            <textarea name="::longtext"></textarea>
+            <br>
+            <textarea name="content" bind="longtext"></textarea>
             LongText: ${longtext}
         </div>
+        <!-- Radio -->
         <div>
-            <input type="radio" name="::sex" value="boy"> Boy
-            <input type="radio" name="::sex" value="girl"> Girl
+            <h2>Radio</h2>
+            <hr>
+            <input type="radio" name="sex" value="boy" bind="sex"> Boy
+            <input type="radio" name="sex" value="girl" bind="sex"> Girl
             Sex: ${sex}
         </div>
+        <!-- Checkbox -->
         <div>
-            <input type="checkbox" name="::open">
-            Open: ${open}
-            <div class="open-view">Open!</div>
+            <h2>Checkbox</h2>
+            <hr>
+            <input type="checkbox" name="open" bind="open">
+            Checked: ${open}
         </div>
+        <!-- Select -->
         <div>
-            <select name="::city">
+            <h2>Select</h2>
+            <hr>
+            <select name="city" bind="city">
                 <option value="Beijing">Beijing</option>
                 <option value="New York">New York</option>
                 <option value="London">London</option>
             </select>
             City: ${city}
         </div>
-        <div>
-            ${subobj.prop}
-        </div>
-    </div>
+    </view>
 
     <script src="../dist/webscript.js"></script>
     <script>
         //(function () {
             var webscript = new WebScript({
+                name: 'view',
                 data: {
                     time: Date.now(),
                     text: "Hello World",

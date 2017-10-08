@@ -1,6 +1,6 @@
 var assert = require('assert');
 
-var compiler = require('../src/compiler');
+var compiler = require('../src/template/compiler');
 
 describe('Template', function () {
     describe('HTML', function () {

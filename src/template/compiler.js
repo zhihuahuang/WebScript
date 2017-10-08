@@ -1,7 +1,7 @@
 /************
  * Compiler *
  ************/
-const _private = require('./private');
+const _private = require('./../utils/private');
 
 const CHAR_LT = "<";
 const CHAR_GT = ">";

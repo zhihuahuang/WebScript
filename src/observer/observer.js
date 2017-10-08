@@ -9,9 +9,9 @@ if (!IS_SUPPORT_PROXY) {
     require('proxy-polyfill/proxy.min');
 }
 
-const _ = require('./utils');
+const _ = require('./../utils/utils');
 
-const _private = require('./private');
+const _private = require('./../utils/private');
 
 class Observer {
     
